@@ -18,7 +18,11 @@ csvExtractFilePath=os.path.join(rootdir,"P1_hieratable","IntermediateData","extr
 hieradb = mysql.connector.connect(
   host="localhost",
   user="root",
+<<<<<<< HEAD
   password=sensitive.mysqlPassword,
+=======
+  password="CENSORED",
+>>>>>>> c0c453b77a29cb3ceeba2c0e2c6130cb3a3238a3
   database="hiera"
 )
 
