@@ -2,12 +2,13 @@ import os
 import json
 import shutil
 import mysql.connector
+import sensitive
 
 #connect to database
 hieradb = mysql.connector.connect(
   host="localhost",
   user="root",
-  password="pTurin1880!",
+  password=sensitive.mysqlPassword,
   database="hiera"
 )
 

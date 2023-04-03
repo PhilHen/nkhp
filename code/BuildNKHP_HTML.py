@@ -5,6 +5,7 @@ import shutil
 import mysql.connector
 import re, string
 import json
+import sensitive
 
 rootdir=r"d:\hieraproject"
 dstwebserverfolder=r"d:\hieratable"
@@ -17,7 +18,7 @@ csvExtractFilePath=os.path.join(rootdir,"P1_hieratable","IntermediateData","extr
 hieradb = mysql.connector.connect(
   host="localhost",
   user="root",
-  password="pTurin1880!",
+  password=sensitive.mysqlPassword,
   database="hiera"
 )
 
@@ -57,7 +58,7 @@ for x in c.fetchall():
         signsDict[mdc]['ligature']="lig"
 c.close()
 
-outfilepath2=os.path.join(dstwebserverfolder,"hiera.htm")
+outfilepath2=os.path.join(dstwebserverfolder,"hieratest.htm")
 
 #load rawAKUCrosefintedata (i.e. all hieratogram metadata) from mysql database
 rawAKUCrosefintedata={}

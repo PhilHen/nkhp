@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 import mysql.connector
+import sensitive
 
 rootdir=r"c:\hieraproject"
 
@@ -9,7 +10,7 @@ rootdir=r"c:\hieraproject"
 hieradb = mysql.connector.connect(
   host="localhost",
   user="root",
-  password="pTurin1880!",
+  password=sensitive.mysqlPassword,
   database="hiera"
 )
 

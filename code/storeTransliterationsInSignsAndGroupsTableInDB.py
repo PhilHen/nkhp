@@ -1,5 +1,6 @@
 import json
 import mysql.connector
+import sensitive
 
 
 # on inclut le code de Christian Casey MdC2Unicode
@@ -35,7 +36,7 @@ for e in r:
 hieradb = mysql.connector.connect(
   host="localhost",
   user="root",
-  password="pTurin1880!",
+  password=sensitive.mysqlPassword,
   database="hiera"
 )
 
