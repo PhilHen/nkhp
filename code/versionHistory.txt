@@ -1,0 +1,2 @@
+03/04/2023: fixed issue with searching transliterations like fnD containing certain upper case ASCII characters in "manuel de codage" format
+05/04/2023: put fixed html in a template in order to shorten coding/debugging cycles for javascript and other literal html features
