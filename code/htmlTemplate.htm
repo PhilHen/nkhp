@@ -9,6 +9,51 @@
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/plug-ins/1.12.1/sorting/natural.js"></script>
 
 <style>
+/* Pour la progress bar (ou progress circle) du chargement */
+#loading_container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #0d0d0d;
+}
+
+#loading_progressbar {
+  position: relative;
+  width: 170px;
+  height: 170px;
+  margin: 1em;
+  transform: rotate(-90deg);
+}
+
+
+#loading_progressbar_svg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#loading_circle {
+  width: 100%;
+  height: 100%;
+  stroke-width: 10;
+  stroke: white;
+  stroke-linecap: round;
+  fill: none;
+}
+
+#loading_text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  padding: 0.25em 0.5em;
+  color: white;
+  font-family: Arial, Helvetica, sans-serif;
+  border-radius: 0.25em;
+  text-align: center;
+  transform: translate(-55%, -55%) rotate(90deg);
+}
+
 /* Language */
 #lang-switch img {
   width: 32px;
@@ -409,13 +454,14 @@ function switchLanguage(activeLang) {
 }
 
 document.onreadystatechange = function() {
+	document.getElementById("main").style.visibility=(document.readyState == "complete")?"visible":"hidden";
     document.getElementById("playarea").style.visibility=(document.readyState == "complete")?"visible":"hidden";
-    document.getElementById("waitarea").style.visibility=(document.readyState == "complete")?"hidden":"visible";
+	document.getElementById("loading_container").style.display=(document.readyState == "complete")?"none":"block";
 	document.getElementById("urlarea").style.visibility=(document.readyState == "complete")?"visible":"hidden";
 	
     if (document.readyState =="complete") {
-			
-	
+			clearInterval(loaderInterval);
+			loaderInterval = null;
 			document.getElementById("topRow").style.textAlign="left";
 			setDisplayedURL(document.URL);
             var params = new  URLSearchParams(window.location.search);   
@@ -541,10 +587,17 @@ function displayImageForDatatableRow( row, aData, iDisplayIndex ) {
 
 </script>
 <body>
-
+<div id="loading_container">
+	<div id="loading_progressbar">
+		<svg id="loading_progressbar_svg">
+			<circle id="loading_circle" cx="80" cy="80" r="60" stroke-dasharray="0 375" stroke-dashoffset="283"> </circle>
+		</svg>
+		<span id="loading_text">NKHP loading</span>
+	</div>
+</div>
+<div id="main" style="visibility:hidden">
 <div class="topRowParent" id="topRow">
 	<div class="topRowChild" id="urlarea" style="visibility:hidden;"><span class="fr_lang"><b>URL du filtre en cours:</b></span><span class="en_lang"><b>URL of current filter:</b></span> <a id="cururl" href='placeholder'>placeholder</a></div>
-	<div class="topRowChild" id="waitarea"><b style="background-color:yellow">Page loading - please wait / Page en cours de chargement - veuillez patienter</b></div>
 </div>
 <div id="drillSidebar"><a href="javascript:void(0)" class="closebtn" onclick="hideOrShowSidebar('drill',false)">&times;</a>
 	<div id="playarea" style="visibility:hidden;">
@@ -556,6 +609,36 @@ function displayImageForDatatableRow( row, aData, iDisplayIndex ) {
 </div>
 <div id="thanksSidebar"><a href="javascript:void(0)" class="closebtn" onclick="hideOrShowSidebar('thanks',false)">&times;</a>
 <br/>
+<script>
+
+//le chargement peut être mesuré de la façon suiante: d'abord la taille du innerHTML augmente jusqu'à environ 4.5 MB, puis les datatables interviennent et on retombe à 600K environ (passage de <table> à datatable)
+// on va donc considérer que la partie initiale d'augmentation de la taille représente 0-80%, puisque quand ça diminue, on a atteint les 90% (les 10 derniers pourcents servant au rendu visuel)
+maxReached=0;
+hasDecreased=false
+function updateLoadProgressBar() {
+	nMax=5000000;
+	curSize =document.documentElement.innerHTML.length;
+	//console.log(curSize);
+	if (curSize<maxReached*0.9) {hasDecreased=true; nPercent=90;}
+	else if (curSize>maxReached) {maxReached=curSize; nPercent=Math.min(maxReached/nMax*80,80);};
+    if (nPercent < 0) { nPercent = 0;}
+    if (nPercent > 100) { nPercent = 100;}
+	document.getElementById("loading_text").innerHTML="NKHP loading " + parseFloat(nPercent).toFixed(0)+"%";
+	var circle = document.querySelector("#loading_circle")
+    var r = circle.getAttribute('r');
+    var c = Math.PI*(r*2);
+	var circumference = 2 * Math.PI * r;
+	var strokeDasharray = (nPercent /100) * circumference;
+    circle.setAttribute('stroke-dasharray', [
+      strokeDasharray,
+      circumference - strokeDasharray
+    ]);
+    circle.setAttribute('stroke-dashoffset', 0);
+}
+loaderInterval=setInterval(updateLoadProgressBar, 100);
+
+</script>
+
 <b>HieraLearn (TROUVER NOM ADEQUAT)</b>
 <div class="fr_lang"><ul class="thanks">
 	<li>HieraLearn (TROUVER NOM ADEQUAT) est un outil d'apprentissage du hiératique du Nouvel Empire et du début de la TPI, développé par <a href="mailto:philippe.hennebert@student.uliege.be">Philippe <font style="font-variant: small-caps">Hennebert</font></a>, étudiant à l'Université de Liège, sous la supervision de <a class="thanks" href="https://www.uliege.be/cms/c_9054334/fr/repertoire?uid=u192490">Stéphane <font style="font-variant: small-caps">Polis</font></a>.</li>
@@ -683,7 +766,8 @@ XXXHTHGOBJECTSXXX
 <!--STARTMAINTABLECONTENT-->
 XXXMAINTABLECONTENT
 <!--ENDMAINTABLECONTENT-->
-</table></body>
+</table>
+</div></body>
 <script>
 function isMatch(searchString,dataToCompare,nSearchType,nField) {
 	//dataToCompare is an array of values (for instance ["wrd","Hms"] with which searchString will be compared)
