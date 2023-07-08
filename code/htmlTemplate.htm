@@ -264,10 +264,14 @@ function translitUnicodeToMdc(s) {
 	dTransliteration2Ascii = {'Ḫ':'#', 'H̲':'$','Ṯ':'*','Ḏ':'+','Ḥ':'@','ꜣ':'A','Ś':'C','ḏ':'D','ḥ':'H','Ḳ':'Q','š':'S','ṯ':'T','h̭':'V','ẖ':'X','𓏞':'\\','Š':'^','ꜥ':'a','ś':'c','ỉ':'i','ḳ':'q','ṱ':'v','ḫ': 'x'}
     //dTransliteration2Ascii = {'H':'!','Ḫ':'#', 'H̲':'$','S':'%','T':'&','Ṯ':'*','Ḏ':'+','Ḥ':'@','ꜣ':'A','Ś':'C','ḏ':'D','ḥ':'H','Q':'O','Ḳ':'Q','š':'S','ṯ':'T','h̭':'V','ẖ':'X','𓏞':'\\','Š':'^','D':'_','ꜥ':'a','ś':'c','ỉ':'i','q':'o','ḳ':'q','ṱ':'v','ḫ': 'x'}
     var sOut="";
+	//représentations multiples du yod
+	s=s.replace("\u0069\u0486","\u1EC9");
+	s=s.replace("\u0069\u0313","\u1EC9");
+	s=s.replace("j","i");
     for (var i = 0; i < s.length; i++) {
         var c=s[i];
         if (c in dTransliteration2Ascii) {
-			console.log("c is " + c + " and is converted to "+dTransliteration2Ascii[c]);
+			//console.log("c is " + c + " and is converted to "+dTransliteration2Ascii[c]);
             sOut=sOut+dTransliteration2Ascii[c];
         } else {
             sOut = sOut + c;
@@ -431,7 +435,7 @@ function computeURL() {
     if (typeof(searchGardi)=="undefined") {searchGardi="";};
     if (typeof(searchMöller)=="undefined") {searchMöller=""};
     if (typeof(searchMdc)=="undefined") {searchMdc=""};
-	searchMdc=translitUnicodeToMdc(searchMdc);
+	searchMdc=translitUnicodeToMdc(searchMdc).replace("-","").replace(".","");
 	if (searchGardi!="") {f="gardi"} else if (searchMöller!="") {f="moeller"} else if (searchMdc!="") {f="translit"};
 	if (searchGardi+searchMöller+searchMdc!="") {
 		sURL+="&s="+encodeURIComponent(searchGardi+searchMöller+searchMdc)+"&f="+f;
@@ -454,9 +458,9 @@ function switchLanguage(activeLang) {
 }
 
 document.onreadystatechange = function() {
-	document.getElementById("main").style.visibility=(document.readyState == "complete")?"visible":"hidden";
+	document.getElementById("loading_container").style.display=(document.readyState == "complete")?"none":"block";	
+	document.getElementById("main").style.display=(document.readyState == "complete")?"block":"none";
     document.getElementById("playarea").style.visibility=(document.readyState == "complete")?"visible":"hidden";
-	document.getElementById("loading_container").style.display=(document.readyState == "complete")?"none":"block";
 	document.getElementById("urlarea").style.visibility=(document.readyState == "complete")?"visible":"hidden";
 	
     if (document.readyState =="complete") {
@@ -595,7 +599,7 @@ function displayImageForDatatableRow( row, aData, iDisplayIndex ) {
 		<span id="loading_text">NKHP loading</span>
 	</div>
 </div>
-<div id="main" style="visibility:hidden">
+<div id="main" style="display:none">
 <div class="topRowParent" id="topRow">
 	<div class="topRowChild" id="urlarea" style="visibility:hidden;"><span class="fr_lang"><b>URL du filtre en cours:</b></span><span class="en_lang"><b>URL of current filter:</b></span> <a id="cururl" href='placeholder'>placeholder</a></div>
 </div>
@@ -614,12 +618,11 @@ function displayImageForDatatableRow( row, aData, iDisplayIndex ) {
 //le chargement peut être mesuré de la façon suiante: d'abord la taille du innerHTML augmente jusqu'à environ 4.5 MB, puis les datatables interviennent et on retombe à 600K environ (passage de <table> à datatable)
 // on va donc considérer que la partie initiale d'augmentation de la taille représente 0-80%, puisque quand ça diminue, on a atteint les 90% (les 10 derniers pourcents servant au rendu visuel)
 maxReached=0;
-hasDecreased=false
 function updateLoadProgressBar() {
 	nMax=5000000;
 	curSize =document.documentElement.innerHTML.length;
-	//console.log(curSize);
-	if (curSize<maxReached*0.9) {hasDecreased=true; nPercent=90;}
+	console.log(curSize);
+	if (curSize<maxReached*0.9) {nPercent=90;}
 	else if (curSize>maxReached) {maxReached=curSize; nPercent=Math.min(maxReached/nMax*80,80);};
     if (nPercent < 0) { nPercent = 0;}
     if (nPercent > 100) { nPercent = 100;}
@@ -830,7 +833,7 @@ $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
     if (typeof(searchGardi)=="undefined") {searchGardi=""};
     if (typeof(searchMöller)=="undefined") {searchMöller=""};
     if (typeof(searchMdc)=="undefined") {searchMdc=""};
-    searchMdc=translitUnicodeToMdc(searchMdc);
+    searchMdc=translitUnicodeToMdc(searchMdc).replace("-","").replace(".","");
     if (blOnlyFrequent && (!isLigat) && (min>nRamses)) {return false;}
     if (isLigat && (!blIncludeLigatures)) {return false;}
 	

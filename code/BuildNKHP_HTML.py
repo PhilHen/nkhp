@@ -15,6 +15,7 @@ dstwebserverfolder=r"d:\hieratable"
 generateCSVextract=False
 csvExtractImgFolder=os.path.join(rootdir,"P1_hieratable","IntermediateData","extractForTranslitDir")
 csvExtractFilePath=os.path.join(rootdir,"P1_hieratable","IntermediateData","extractForTranslit.csv")
+outhtmlpath=os.path.join(dstwebserverfolder,"hieratest.htm")
 
 #load html template
 f = open(htmlTemplateFile,"r",encoding="utf-8")
@@ -44,7 +45,7 @@ for x in c.fetchall():
 patternOnlyAlphanum = re.compile('[\W_]+')
 signsDict={}
 sSql="SELECT mdc, svgpath, if(singleMoellerCodes is null,'',singleMoellerCodes),if(groupMoellerCode is null, '',groupMoellerCode),id, " + \
-          " if(allTransliterations is null, '', allTransliterations) FROM signsAndGroups"
+          " if(transliterations is null, '', transliterations) FROM signsAndGroups"
 #on n'inclut pas encore les translitérations ici
 c=hieradb.cursor()
 c.execute(sSql)
@@ -65,7 +66,7 @@ for x in c.fetchall():
         signsDict[mdc]['ligature']="lig"
 c.close()
 
-outfilepath2=os.path.join(dstwebserverfolder,"hieratest.htm")
+
 
 #load rawAKUCrosefintedata (i.e. all hieratogram metadata) from mysql database
 rawAKUCrosefintedata={}
@@ -317,10 +318,10 @@ for gardikey in signsDict:
  sTranslitUnicode=""
  sTranslitAscii=""
  if "translit" in b:
-  s=b["translit"]
-  sCurItem2+="<br/>".join(["<b>"+k[0].upper()+"</b>:"+", ".join([a["unicode"] for a in v]) for k,v in s.items()])
-  sTranslitUnicode=", ".join([", ".join([a["unicode"] for a in v]) for k,v in s.items()])
-  sTranslitAscii=", ".join([", ".join([a["ascii"] for a in v]) for k,v in s.items()])
+  tr=b["translit"]
+  sTranslitUnicode=", ".join(a["unicode"] for a in tr)
+  sTranslitAscii=", ".join(a["ascii"] for a in tr)
+  sCurItem2+=sTranslitUnicode
  sCurCSVLine+="\t"+sTranslitUnicode+"\t"+sTranslitAscii
  sCurItem2+="</td>\r"
  sCurItem2+="<td>"
@@ -360,8 +361,9 @@ for gardikey in signsDict:
  sCurCSVLine+="\t"+str(nAku)+"\t"+str(nCrosefinte)+"\t"+str(nWimmer)+"\n"
  csvlines.append({"text":sCurCSVLine,"order":getOrderString(b)})
  if "translit" in b:
-  s=b["translit"]
-  sCurItem2+=",".join([",".join([a["ascii"] for a in v]) for k,v in s.items()])
+  tr=b["translit"]
+  # on néglige les - et les . dans la colonne qui sert à la recherche (pour pouvoir chercher Hm.t comme Hmt)
+  sCurItem2+=",".join(a["ascii"] for a in tr).replace("-","").replace(".","")
  sCurItem2+="</td>" 
  sCurItem2+="</tr>\r"
  # colonne pour la recherche sur la translitération
@@ -370,7 +372,7 @@ for gardikey in signsDict:
 
 sHtml=sHtml.replace("XXXMAINTABLECONTENT",sTableContent)
 
-textfile2=open(outfilepath2,'wb')
+textfile2=open(outhtmlpath,'wb')
 textfile2.write(sHtml.encode("utf8")) 
 textfile2.close()
 if generateCSVextract:

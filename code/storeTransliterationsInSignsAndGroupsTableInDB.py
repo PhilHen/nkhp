@@ -1,20 +1,7 @@
 import json
 import mysql.connector
 import sensitive
-
-
-# on inclut le code de Christian Casey MdC2Unicode
-dAscii2Transliteration = { '!': 'H', '#': 'Ḫ', '$': 'H̲', '%': 'S', '&': 'T', '*': 'Ṯ', '+': 'Ḏ', '@': 'Ḥ', 'A': 'ꜣ', 'C': 'Ś', 'D': 'ḏ', 'H': 'ḥ', 'O': 'Q', 'Q': 'Ḳ', 'S': 'š', 'T': 'ṯ', 'V': 'h̭', 'X': 'ẖ', '\\': '𓏞', '^': 'Š', '_': 'D', 'a': 'ꜥ', 'c': 'ś', 'i': 'ỉ', 'o': 'q', 'q': 'ḳ', 'v': 'ṱ', 'x': 'ḫ' }
-def unicodeTransliteration(sAscii):
-    sUnicode = ''
-    for i, c in enumerate(sAscii):
-        if c in dAscii2Transliteration.keys():
-            sUnicode += dAscii2Transliteration[c]
-        else:
-            sUnicode += c
-    return sUnicode
-# fin du code MdC2Unicode
-
+import mdc2unicode
 
 # on crée d'abord un tableau des translitérations
 from lxml import etree
