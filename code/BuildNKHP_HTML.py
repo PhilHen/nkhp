@@ -90,7 +90,7 @@ c.close()
 datatoadd=[]
 for k,d in rawAKUCrosefintedata.items():
     hiera_id=d['id']
-    sHieratOutputFileName="h"+str(hiera_id)+".svg"    #hiératogramme h1234.svg
+    sHieratOutputFileName="h"+str(hiera_id)+".svg"    #hiératogramme h1234.svg par exemple
     shutil.copy(d['path'],os.path.join(dstimgfolder,sHieratOutputFileName))
     datatoadd.append(d)
     if len(d) % 100 ==0:
@@ -229,7 +229,8 @@ print("Début du tri par registre de texte")
 for gardikey in signsDict:
  b=signsDict[gardikey]
  for hd in b['hieratogram_data']:
-    hd['registreCateg']=dcat[hd["textContentType"]] if (hd['extractedFrom']=='AKU' and hd["textContentType"] in dcat) else "C99-OTH"
+    #hd['registreCateg']=dcat[hd["textContentType"]] if (hd['extractedFrom']=='AKU' and hd["textContentType"] in dcat) else "C99-OTH"
+    hd['registreCateg']=dcat[hd["textContentType"]] if ("textContentType" in hd and hd["textContentType"] in dcat) else "C99-OTH"
  b['hieratogram_data']=sorted(b['hieratogram_data'], key=lambda x:x['registreCateg'])
 print("fin du tri")
 
@@ -338,7 +339,8 @@ for gardikey in signsDict:
   sCurItem2+="<td>"
   for hd in b["hieratogram_data"]:
    if hd["html_column"]==i:
-    curCat=dcat[hd["textContentType"]] if (hd['extractedFrom']=='AKU' and hd["textContentType"] in dcat) else "C98-UNK"
+    #curCat=dcat[hd["textContentType"]] if (hd['extractedFrom']=='AKU' and hd["textContentType"] in dcat) else "C98-UNK"
+    curCat=dcat[hd["textContentType"]] if ("textContentType" in hd and hd["textContentType"] in dcat) else "C98-UNK"
     sCurItem2+="<div class='hier "+curCat+"' id='"+hd["id"]+"' >"
     if hd['extractedFrom']=='AKU':
         sCurItem2+="<span class='tooltiptext'><a href='https://aku-pal.uni-mainz.de/signs/"+hd["id"]+"' target='_blank'>Aku "+hd["id"]+"</a><br/>"+hd["textContentType"]+"<br/>"+hd["text"]+"<br/>"+hd["date"]+"</span>"

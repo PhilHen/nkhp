@@ -1,5 +1,8 @@
 <html>
-<head><meta charset="utf-8"></head>
+<head>
+	<meta charset="utf-8">
+	<title>NKHP - New Kingdom Hieratic Paleographies</title>
+</head>
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.css">
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/3.2.4/css/fixedHeader.dataTables.min.css">
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
@@ -125,7 +128,7 @@ ul{ margin-top:0; margin-bottom:0 }
 }
 
 .topButtons {
-	position:fixed;
+	position:absolute;
 	top:0;
 	right:10px;
 	height:30px;
@@ -321,9 +324,10 @@ function generateDrill(nExercises) {
  /* on construit un hashtable de tous les hiéroglyphes avec leur fréquence au départ des données dataTable */
  for (var i=0;i<datatable.rows().data().length;i++) {
     hrow=datatable.rows().data()[i];
-	rowid=datatable.row(i).node().getAttribute("id").substring(3);
-	//console.log("Comparing " + rowid + " with " + hrow[0]);
-    hieros[rowid]={'freq': hrow[4], 'translit': hrow[3]}
+	//rowid=datatable.row(i).node().getAttribute("id").substring(3);
+	//console.log("Hieros of " + rowid + " has freq " + hrow[4] + " and translit " + hrow[3]);
+    //hieros[rowid]=  {'freq': hrow[4], 'translit': hrow[3]}
+	hieros[hrow.DT_RowId.substring(3)]={'freq': hrow[4], 'translit': hrow[3]};
  }
  
  // on utilise la hashtable ht de tous les hiératogrammes 
