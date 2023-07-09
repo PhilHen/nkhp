@@ -121,32 +121,31 @@ ul{ margin-top:0; margin-bottom:0 }
 
 .thanks li {
    margin-bottom: 3px;  
-   margin-top: 3px;  
+   margin-top: 3px;  ²
 }
 
-#openSettingsButton {
+.topButtons {
 	position:fixed;
 	top:0;
-	right:0;
+	right:10px;
 	height:30px;
-	width;30px;
+	width:120px;
 	cursor:pointer;
+	z-index:2;
+	display:flex;
 }
-#openDrillButton {
-	position:fixed;
-	top:0;
-	right:40px;
+
+.topButton {
+	position:relative;
+	display: inline-block;
+	width:30px;
 	height:30px;
-	width;30px;
-	cursor:pointer;
 }
-#openThanksButton {
-	position:fixed;
-	top:0;
-	right:70px;
-	height:30px;
-	width;30px;
-	cursor:pointer;
+
+.topButton img {
+	width:100%;
+	height:100%;
+	object-fit:contain;
 }
 
 #settingsSidebar {
@@ -243,12 +242,30 @@ ul{ margin-top:0; margin-bottom:0 }
   padding: 5px 0;
   border-radius: 6px;
   position: absolute;
-  left: 105%;
+  right: 105%;
   z-index: 1;
 }
 
 /* Show the tooltip text when you mouse over the tooltip container */
 .hier:hover .tooltiptext {
+  visibility: visible;
+}
+
+.topButton .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: black;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  position: absolute;
+  right: 65%;
+  top: 65%;
+  z-index: 3;
+}
+
+.topButton:hover .tooltiptext {
   visibility: visible;
 }
 
@@ -424,24 +441,31 @@ function computeURL() {
     var searchMdc=$("#searchMdc").val();
 	var f="";
 	
+	
+	
+	
 	var min = parseInt($("#minFrequent").val(),10);
 	var blOnlyFrequent = $("#check_onlyfrequent")[0].checked;
     var blIncludeLigatures = $("#check_includeLigatures")[0].checked;
 	var t="";
     //if ($("#check_matchexact")[0].checked) {m="exact";}	else	//default value is exact
 	if ($("#check_matchcontains")[0].checked) {t="contains";}	else if ($("#check_matchregex")[0].checked) {t="regex";}
+	if (t!="") {sURL+="&t="+t;}
 	
+	var f="";
+	if ($("#check_filtersEXCLUSIVE")[0].checked) {f="exclusive"} else if ($("#check_filtersAND")[0].checked) {f="and"} else if ($("#check_filtersOR")[0].checked) {f="or"}
+	sURL+="&f="+f;
 	
     if (typeof(searchGardi)=="undefined") {searchGardi="";};
     if (typeof(searchMöller)=="undefined") {searchMöller=""};
     if (typeof(searchMdc)=="undefined") {searchMdc=""};
 	searchMdc=translitUnicodeToMdc(searchMdc).replace("-","").replace(".","");
-	if (searchGardi!="") {f="gardi"} else if (searchMöller!="") {f="moeller"} else if (searchMdc!="") {f="translit"};
-	if (searchGardi+searchMöller+searchMdc!="") {
-		sURL+="&s="+encodeURIComponent(searchGardi+searchMöller+searchMdc)+"&f="+f;
-		if (t!="") {sURL+="&t="+t;}
-	}
-	if (blOnlyFrequent) { sURL+="&freq="+min;}
+	if (searchGardi!="") {sURL+="&gardi="+encodeURIComponent(searchGardi)}
+	if (searchMöller!="") {sURL+="&moeller="+encodeURIComponent(searchMöller)}
+	if (searchMdc!="") {sURL+="&mdc="+encodeURIComponent(searchMdc)}
+	
+	if (blOnlyFrequent) { sURL+="&onlyfreq=1";}
+	sURL+="&minfreq="+min;
 	if (!blIncludeLigatures) {sURL+="&lig=0";}
 	
 	return sURL;
@@ -468,45 +492,68 @@ document.onreadystatechange = function() {
 			loaderInterval = null;
 			document.getElementById("topRow").style.textAlign="left";
 			setDisplayedURL(document.URL);
-            var params = new  URLSearchParams(window.location.search);   
-            var searchItem = params.get("s"); 		
-            var searchField = params.get("f");		//gardi, translit or moeller
-            var searchType = params.get("t");		//exact, contains or regex
-            var includeLigs = params.get("lig")	;	//0 or 1
-            var minFrequent = params.get("freq");
-			var lang = params.get("lang");
-            if (minFrequent == null) {minFrequent=""};
-			if (lang == null) {lang="fr"};
-
-			switchLanguage(lang);
-
-            if (searchItem != "") {
-                    var htmlFieldSearch = "Gardi";
-                    if (searchField=="translit") {htmlFieldSearch="Mdc"}
-                    else if (searchField=="moeller") {htmlFieldSearch="Möller"};
-                    $("#search"+htmlFieldSearch).val(searchItem);
-
-                    if (includeLigs=="0") { $("#check_includeLigatures")[0].checked=false }
-                    if (minFrequent !="") {
-                            $("#check_onlyfrequent")[0].checked=true;
-                            $("#minFrequent").val(minFrequent);
-                    }
-                    
-                    if ((searchType!="exact") && (searchType!="contains") && (searchType!="regex")) {searchType="exact"};
-                    arr=["exact","contains","regex"];
-                    $("#check_match"+searchType)[0].checked=true;		
-                    for (i=0;i<arr.length;i++) {
-                            if (arr[i]!=searchType) { 
-                                    $("#check_match"+arr[i])[0].checked=false; 
-                            }
-                    }
-            }
-            if (Array.from(params).length >0 ) {
-                    updateDisplay();
-            }
+            const params = Object.fromEntries(new  URLSearchParams(window.location.search));   
+			applyPageParams(params);
     }
 };
 
+
+function applyPageParams(params) {
+	var searchGardi = params["gardi"]; 
+	var searchMöller = params["moeller"]; 	
+	var searchMdc = params["mdc"]; 			
+	var searchType = params["t"];		//exact, contains or regex
+	var filteringType = params["f"];
+	var includeLigs = params["lig"]	;	//0 or 1
+	var onlyFreq = params["onlyfreq"];
+	var minFrequent = params["minfreq"];
+	var lang = params["lang"];
+	if (onlyFreq== null) {onlyFreq=0};
+	if (minFrequent == null) {minFrequent=""};
+	if (lang == null) {lang="fr"};
+	if (searchGardi == null) {searchGardi=""};
+	if (searchMöller == null) {searchMöller=""};
+	if (searchMdc == null) {searchMdc=""};
+	if (filteringType == null) {filteringType="or"};
+
+	switchLanguage(lang);
+	
+	if (minFrequent !="") {$("#minFrequent").val(minFrequent);}
+	$("#check_onlyfrequent")[0].checked=((onlyFreq==1)?true:false);
+			
+	if (includeLigs=="0") { $("#check_includeLigatures")[0].checked=false }
+
+	if ((searchType!="exact") && (searchType!="contains") && (searchType!="regex")) {searchType="exact"};
+	arr=["exact","contains","regex"];
+	$("#check_match"+searchType)[0].checked=true;		
+	for (i=0;i<arr.length;i++) {
+			if (arr[i]!=searchType) { 
+					$("#check_match"+arr[i])[0].checked=false; 
+			}
+	}
+
+	if ((filteringType!="exclusive") && (filteringType!="and") && (filteringType!="or")) {filteringType="or"};
+	filteringType=filteringType.toUpperCase();
+	arr=["EXCLUSIVE","OR","AND"];
+	$("#check_filters"+filteringType)[0].checked=true;		
+	for (i=0;i<arr.length;i++) {
+			if (arr[i]!=filteringType) { 
+					$("#check_filters"+arr[i])[0].checked=false; 
+			}
+	}
+
+	{$("#searchGardi").val(searchGardi);}
+	{$("#searchMöller").val(searchMöller);}
+	{$("#searchMdc").val(searchMdc);}
+
+   if (Object.keys(params).length >0 ) {
+			updateDisplay();
+	}
+}
+
+function emptyAll() {
+	applyPageParams({"gardi":"","moeller":"","mdc":"","t":"exact","filteringType":"or","includeLigs":"1","minfreq":"5","onlyfreq":"0","lang":"fr"});
+}
 
 function changeNoColor() {
     toggleHieratogramsTransparency($("#check_nocolor")[0].checked);
@@ -642,14 +689,14 @@ loaderInterval=setInterval(updateLoadProgressBar, 100);
 
 </script>
 
-<b>HieraLearn (TROUVER NOM ADEQUAT)</b>
+<b>NKHP (New Kingdom Hieratic Paleographies)</b>
 <div class="fr_lang"><ul class="thanks">
-	<li>HieraLearn (TROUVER NOM ADEQUAT) est un outil d'apprentissage du hiératique du Nouvel Empire et du début de la TPI, développé par <a href="mailto:philippe.hennebert@student.uliege.be">Philippe <font style="font-variant: small-caps">Hennebert</font></a>, étudiant à l'Université de Liège, sous la supervision de <a class="thanks" href="https://www.uliege.be/cms/c_9054334/fr/repertoire?uid=u192490">Stéphane <font style="font-variant: small-caps">Polis</font></a>.</li>
+	<li>NKHP est un outil d'apprentissage du hiératique du Nouvel Empire et du début de la TPI, développé par <a href="mailto:philippe.hennebert@student.uliege.be">Philippe <font style="font-variant: small-caps">Hennebert</font></a>, étudiant à l'Université de Liège, sous la supervision de <a class="thanks" href="https://www.uliege.be/cms/c_9054334/fr/repertoire?uid=u192490">Stéphane <font style="font-variant: small-caps">Polis</font></a>.</li>
 	<li>Cet outil permet d'explorer de façon dynamique les paléographies de Georg <font style="font-variant: small-caps">Möller</font> (vol. II) et de Stefan <font style="font-variant: small-caps">Wimmer</font>, notamment via des filtres et recherches complexes, permettant notamment des comparaisons</li>
 	<li>Un module d'entraînement à la reconnaissance de graphèmes est également accessible à l'étudiant (génération aléatoire de listes de graphèmes à identifier).</li>
 </ul></div>
 <div class="en_lang"><ul class="thanks">
-	<li>HieraLearn (FIND PROPER NAME) is a learning tool for New Kingdom (and early TIP) hieratic, déveloped by <a href="mailto:philippe.hennebert@student.uliege.be">Philippe <font style="font-variant: small-caps">Hennebert</font></a>, student at Liège University, under the supervision of <a class="thanks" href="https://www.uliege.be/cms/c_9054334/fr/repertoire?uid=u192490">Stéphane <font style="font-variant: small-caps">Polis</font></a>.</li>
+	<li>NKHP is a learning tool for New Kingdom (and early TIP) hieratic, déveloped by <a href="mailto:philippe.hennebert@student.uliege.be">Philippe <font style="font-variant: small-caps">Hennebert</font></a>, student at Liège University, under the supervision of <a class="thanks" href="https://www.uliege.be/cms/c_9054334/fr/repertoire?uid=u192490">Stéphane <font style="font-variant: small-caps">Polis</font></a>.</li>
 	<li>This tool aims at exploring dynamically Georg <font style="font-variant: small-caps">Möller</font>'s and Stefan <font style="font-variant: small-caps">Wimmer</font>'s paleographies, through filters and complex searches allowing for sign comparisons.</li>
 	<li>A training module for grapheme recognition is also available to interested students, randomly generating graphemes lists.</li>
 </ul></div>
@@ -720,7 +767,7 @@ loaderInterval=setInterval(updateLoadProgressBar, 100);
 		</td></tr>
 		<tr><td style="vertical-align:top"><input type="checkbox" id="check_matchregex"></td><td><b class="fr_lang">Correspondance-regex</b><b class="en_lang">Regex match</b>
 			<div class="fr_lang"><ul>
-                            <li>Affiche tous les signes dont une des valeurs correspond à l'expression régulière encodée comme terme de recherche.</li>
+                            <li>Affiche tous les signes dont une des valeurs correspond à l'expression régulière encodée.</li>
                             <li>La virgule ne peut pas être utilisée ici pour séparer plusieurs expressions régulières (utiliser la syntaxe regex usuelle de l'opérateur OU ( | ) ).</li>
                             <li>Par exemple, dans la colonne Gardiner, ^G affichera tout signe ou groupe commençant par un oiseau.</li>
                             <li>Dans la colonne Gardiner, ^G[0-9]*[a-zA-Z]*$ affichera tous les signes d'oiseaux  mais pas les groupes commençant par un oiseau.</li>
@@ -736,6 +783,32 @@ loaderInterval=setInterval(updateLoadProgressBar, 100);
                             <li>In the Möller column, ^[^0-9] will display all Roman numerals Möller codes - i.e. ligatures and groups classified as such in Möller's paleography.</li>
 			</ul></div>
 		</td></tr>
+		<tr><td style="vertical-align:top"><input type="checkbox" id="check_filtersEXCLUSIVE"></td><td><b class="fr_lang">Filtres EXCLUSIFS</b><b class="en_lang">EXCLUSIVE filters</b>
+			<div class="fr_lang"><ul>
+                            <li>Un seul filtre peut être appliqué à la fois (sur le code Gardiner OU Möller OU la translitération).</li>
+							<li>Dès lors, introduire du texte dans un des filtres effacera le contenu des deux autres filtres.</li>
+ 			</ul></div>
+			<div class="en_lang"><ul>
+                            <li>Only one filter (either on Gardiner codes OR on Möller codes OR on transliteration) can be applied at any given.</li>
+                            <li>Hence typing any text in a filter will erase the content of the other filters.</li>
+			</ul></div>
+		</td></tr>		
+		<tr><td style="vertical-align:top"><input type="checkbox" id="check_filtersAND"></td><td><b class="fr_lang">Filtres ET</b><b class="en_lang">AND filters</b>
+			<div class="fr_lang"><ul>
+                            <li>Les conditions décrites par les filtres sont appliquées cumulativement (ET logique): les lignes affichées  doivent répondre à toutes les conditions.</li>
+ 			</ul></div>
+			<div class="en_lang"><ul>
+                            <li>Filters are ANDed - i.e. applied cumulatively : displayed lines are those that match all filters.</li>
+			</ul></div>
+		</td></tr>
+		<tr><td style="vertical-align:top"><input type="checkbox" id="check_filtersOR" checked></td><td><b class="fr_lang">Filtres OU</b><b class="en_lang">OR filters</b>
+			<div class="fr_lang"><ul>
+                            <li>OU logique : les lignes affichées sont celles qui répondent à au moins une des conditions.</li>
+ 			</ul></div>
+			<div class="en_lang"><ul>
+                            <li>Filters are ORed : displayed lines are those that match at least one of the filters.</li>
+			</ul></div>
+		</td></tr>
 		<tr><td><input type="checkbox" id="check_onlyfrequent"></td>
                     <td>
                         <span class="fr_lang">Seulement les signes fréquents</span><span class="en_lang">Only frequent signs</span>
@@ -748,9 +821,36 @@ loaderInterval=setInterval(updateLoadProgressBar, 100);
                 </tr>
 	</table>
 </div>
-<img id="openSettingsButton" src="imgstatic/settings.png" onclick="hideOrShowSidebar('settings',true)"/>
-<img id="openDrillButton" src="imgstatic/work.svg" onclick="hideOrShowSidebar('drill',true)"/>
-<img id="openThanksButton" src="imgstatic/pray.svg" onclick="hideOrShowSidebar('thanks',true)"/>
+<div class="topButtons">
+	<div class="topButton" id="emptyAllDiv">
+		<span class="tooltiptext">
+			<div class="fr_lang">Vider tous les filtres / réinitialiser</div>
+			<div class="en_lang">Empty all filters / reset</div>
+		</span>
+		<img src="imgstatic/Sw.svg" onclick="emptyAll()"/>
+	</div>
+	<div class="topButton" id="openThanksDiv">
+		<span class="tooltiptext">
+			<div class="fr_lang">Remerciements & références & à propos de NKHP</div>
+			<div class="en_lang">Thanks & references & about NKHP</div>
+		</span>
+		<img src="imgstatic/pray.svg" onclick="hideOrShowSidebar('thanks',true)"/>
+	</div>
+	<div class="topButton" id="openDrillDiv">
+		<span class="tooltiptext">
+			<div class="fr_lang">Exercices d'entraînement</div>
+			<div class="en_lang">Training exercises</div>
+		</span>
+		<img src="imgstatic/work.svg" onclick="hideOrShowSidebar('drill',true)"/>
+	</div>
+	<div class="topButton" id="openSettingsDiv">
+		<span class="tooltiptext">
+			<div class="fr_lang">Paramètres & aide</div>
+			<div class="en_lang">Settings & help</div>
+		</span>
+		<img src="imgstatic/settings.png" onclick="hideOrShowSidebar('settings',true)"/>
+	</div>
+</div>
 <table border="1"><tbody><tr>
 <!--STARTTDFORTEXTCATEG-->
 XXXTDFORTEXTCATEGXXX
@@ -825,8 +925,10 @@ $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
     var nRamses = parseFloat(data[4]) || 0; 
     var blOnlyFrequent = $("#check_onlyfrequent")[0].checked;
     var blIncludeLigatures = $("#check_includeLigatures")[0].checked;
-    nSearchType=0;
+    nSearchType=0; // 1=exact, 2=contains, 3 = regex
     if ($("#check_matchexact")[0].checked) {nSearchType=1;}	else if ($("#check_matchcontains")[0].checked) {nSearchType=2;}	else if ($("#check_matchregex")[0].checked) {nSearchType=3;}
+	nFilteringType=0	// 1 = exclusive, 2 = AND, 3 = OR
+	if ($("#check_filtersEXCLUSIVE")[0].checked) {nFilteringType=1;} else if ($("#check_filtersAND")[0].checked) {nFilteringType=2;} else if ($("#check_filtersOR")[0].checked) {nFilteringType=3;}
     var searchGardi=$("#searchGardi").val();
     var searchMöller=$("#searchMöller").val();
     var searchMdc=$("#searchMdc").val();
@@ -836,13 +938,34 @@ $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
     searchMdc=translitUnicodeToMdc(searchMdc).replace("-","").replace(".","");
     if (blOnlyFrequent && (!isLigat) && (min>nRamses)) {return false;}
     if (isLigat && (!blIncludeLigatures)) {return false;}
-	
-    if (searchGardi!="") {
-		return isMatch(searchGardi,[data[0]],nSearchType,1);
-    } else if (searchMöller!="") {
-		return isMatch(searchMöller, data[1].replace("=",",").split(","),nSearchType,2);	//Möller can be of the type 626,646=LXIII - we divide that into the array ["626","646","LXIII"]
-    } else if (searchMdc!="") {
-		return isMatch(searchMdc,data[12].split(","),nSearchType,3);
+	if ((searchGardi!="") || (searchMöller!="") || (searchMdc!="")) {
+		blResult=false;
+		if (nFilteringType==2)  {blResult=true};
+		if (searchGardi!="") {
+			bl=isMatch(searchGardi,[data[0]],nSearchType,1);
+			switch (nFilteringType) {
+				case 1: blResult=bl;
+				case 2: blResult=blResult && bl;
+				case 3: blResult=blResult || bl;
+			}
+		}
+		if (searchMöller!="") {
+			bl=isMatch(searchMöller, data[1].replace("=",",").split(","),nSearchType,2);	//Möller can be of the type 626,646=LXIII - we divide that into the array ["626","646","LXIII"]
+			switch (nFilteringType) {
+				case 1: blResult=bl;
+				case 2: blResult=blResult && bl;
+				case 3: blResult=blResult || bl;
+			}
+		}
+		if (searchMdc!="") {
+			bl=isMatch(searchMdc,data[12].split(","),nSearchType,3);
+			switch (nFilteringType) {
+				case 1: blResult=bl;
+				case 2: blResult=blResult && bl;
+				case 3: blResult=blResult || bl;
+			}
+		}
+		return blResult;
     } else {
         //console.log("Triggered search");
         if (isLigat) {
@@ -902,20 +1025,29 @@ function updateDisplay() {
 }
 
 $('#searchGardi').keyup(function () {
-    $('#searchMöller').val('');
-    $('#searchMdc').val('');
+	blExclusiveMode = ($("#check_filtersEXCLUSIVE")[0].checked);
+	if (blExclusiveMode) {
+		$('#searchMöller').val('');
+		$('#searchMdc').val('');
+	}
 	updateDisplay();
 });
 
 $('#searchMöller').keyup(function () {
-    $('#searchGardi').val('');
-    $('#searchMdc').val('');
+	blExclusiveMode = ($("#check_filtersEXCLUSIVE")[0].checked);
+	if (blExclusiveMode) {
+		$('#searchGardi').val('');
+		$('#searchMdc').val('');
+	}
     updateDisplay();
 });
 
 $('#searchMdc').keyup(function () {
-    $('#searchGardi').val('');
-    $('#searchMöller').val('');
+	blExclusiveMode = ($("#check_filtersEXCLUSIVE")[0].checked);
+	if (blExclusiveMode) {
+		$('#searchGardi').val('');
+		$('#searchMöller').val('');
+	}
     updateDisplay();
 });
 
@@ -928,6 +1060,28 @@ $('#check_matchexact, #check_matchcontains, #check_matchregex').change(function 
 			$("#"+arr[i])[0].checked=false; 
 		}
 	}
+	updateDisplay();
+});
+
+$('#check_filtersEXCLUSIVE, #check_filtersAND, #check_filtersOR').change(function (event) {
+    arr=["check_filtersEXCLUSIVE","check_filtersAND","check_filtersOR"];
+	curTarget=event.target.getAttribute("id");
+	$("#"+curTarget)[0].checked=true;
+	for (i=0;i<arr.length;i++) {
+		if (arr[i]!=curTarget) { 
+			$("#"+arr[i])[0].checked=false; 
+		}
+	}
+	//if we are entering exclusive mode, no more than one of the filter text fields should be filled
+	if ($("#check_filtersEXCLUSIVE")[0].checked) {
+		if ($("#searchGardi").val()!="") {
+			$('#searchMöller').val('');
+			$('#searchMdc').val('');
+		} else if ($("#searchMöller").val()!="") {
+			$('#searchMdc').val('');
+		}
+	}
+	
 	updateDisplay();
 });
 
