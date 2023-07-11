@@ -68,8 +68,8 @@ c.close()
 
 
 
-#load rawAKUCrosefintedata (i.e. all hieratogram metadata) from mysql database
-rawAKUCrosefintedata={}
+#load rawHieratogramdata (i.e. all hieratogram metadata) from mysql database
+rawHieratogramdata={}
 sSql = "select graphemes.name, M1.name, G1.value, sources.name  from graphemes, metadatatypes M1,graphemesmetadata G1,sources " + \
      "where G1.grapheme_id=graphemes.id and G1.metadatatype_id=M1.id and sources.id=graphemes.source_id " + \
      "and (sources.name='Crosefinte' or sources.name='Wimmer' or (sources.name='AKU' " + \
@@ -79,16 +79,16 @@ sSql = "select graphemes.name, M1.name, G1.value, sources.name  from graphemes, 
 c=hieradb.cursor()
 c.execute(sSql)
 for x in c.fetchall():
-    if not(x[0] in rawAKUCrosefintedata):
-        rawAKUCrosefintedata[x[0]]={'id':x[0], 'extractedFrom':x[3]}
+    if not(x[0] in rawHieratogramdata):
+        rawHieratogramdata[x[0]]={'id':x[0], 'extractedFrom':x[3]}
     sx2 = x[2]
     if x[1]=="wimmerPlate":
         sx2=sx2.split("_")[2]
-    rawAKUCrosefintedata[x[0]][x[1]]=sx2
+    rawHieratogramdata[x[0]][x[1]]=sx2
 c.close()
 
 datatoadd=[]
-for k,d in rawAKUCrosefintedata.items():
+for k,d in rawHieratogramdata.items():
     hiera_id=d['id']
     sHieratOutputFileName="h"+str(hiera_id)+".svg"    #hiératogramme h1234.svg par exemple
     shutil.copy(d['path'],os.path.join(dstimgfolder,sHieratOutputFileName))
@@ -222,7 +222,6 @@ for k,v in signsDict.items():
 for k in arr:
     del signsDict[k]
 print("After removal: {} element".format(len(signsDict)))
-
 
 #Pour chaque code Gardiner, on va trier les hiératogrammes par registre (catégorie) de texte
 print("Début du tri par registre de texte")
