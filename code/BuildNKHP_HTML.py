@@ -7,7 +7,10 @@ import re, string
 import json
 import sensitive
 
-
+#lazyLoadMethod="DATATABLESCALLBACK"    #possible values, "VANILLA", "OBSERVER", "DATATABLESCALLBACK"
+lazyLoadMethod="VANILLA"
+#imgFetchMethod="BASE64" #possible values "BASE64","FILE"
+imgFetchMethod="FILE"
 htmlTemplateFile=r"D:\hieraProject\P1_hieratable\Code\htmltemplate.htm"
 rootdir=r"d:\hieraproject"
 dstwebserverfolder=r"d:\hieratable"
@@ -21,6 +24,7 @@ outhtmlpath=os.path.join(dstwebserverfolder,"hieratest.htm")
 f = open(htmlTemplateFile,"r",encoding="utf-8")
 sHtml = f.read()
 f.close()
+sHtml=sHtml.replace("XXXLAZYLOADMETHODXXX",lazyLoadMethod)
 
 #connect to database
 hieradb = mysql.connector.connect(
@@ -41,29 +45,41 @@ c.execute(sSql)
 for x in c.fetchall():
     dcat[x[0]]="C"+x[1]
 
+hieratBase64={}
+
 # on charge depuis la db le tableau des signes hiéroglyphiques - il faut cependant copier encore les hiéroglyphes eux-mêmes
 patternOnlyAlphanum = re.compile('[\W_]+')
 signsDict={}
 sSql="SELECT mdc, svgpath, if(singleMoellerCodes is null,'',singleMoellerCodes),if(groupMoellerCode is null, '',groupMoellerCode),id, " + \
-          " if(transliterations is null, '', transliterations) FROM signsAndGroups"
-#on n'inclut pas encore les translitérations ici
+          " if(transliterations is null, '', transliterations), ramsesFrequency FROM signsAndGroups"
 c=hieradb.cursor()
 c.execute(sSql)
 for x in c.fetchall():
     mdc=x[0]
     mdconlyalphanum=patternOnlyAlphanum.sub('', mdc)
+    sFormat=x[1].split(".")[-1]
     if x[2]!="" and x[3]!="":   #codes Möller
         sMoll=x[2]+"="+x[3]
     else:
         sMoll=x[2]+x[3]
     sInputPath=x[1]
-    sHierogOutputFilename="g"+str(x[4])+".svg"
-    shutil.copy(sInputPath,os.path.join(dstimgfolder,sHierogOutputFilename))
-    signsDict[mdc]={"gardi":x[0],"hierog":sHierogOutputFilename,"N Möller":sMoll}
+    if imgFetchMethod=="BASE64":
+        imgfile=open(x[1],'rb')
+        b64=base64.b64encode(imgfile.read()).decode("ascii")
+        imgfile.close()
+        b64 = "data:image/"+("svg+xml" if sFormat=="svg" else sFormat)+";base64,"+b64
+    else:
+        sHierogOutputFilename="g"+str(x[4])+".svg"
+        shutil.copy(sInputPath,os.path.join(dstimgfolder,sHierogOutputFilename))
+    signsDict[mdc]={"gardi":x[0],"imgsrc":b64 if imgFetchMethod=="BASE64" else "img/"+sHierogOutputFilename,\
+                    "N Möller":sMoll,"format":sFormat}
     if x[5]!="":
         signsDict[mdc]["translit"]=json.loads(x[5])
     if mdconlyalphanum!=mdc:
         signsDict[mdc]['ligature']="lig"
+    signsDict[mdc]["frequency"]=x[6]
+    if len(signsDict)%100==0:
+        print("Loaded {} hieroglyphs".format(len(signsDict)))
 c.close()
 
 
@@ -87,14 +103,23 @@ for x in c.fetchall():
     rawHieratogramdata[x[0]][x[1]]=sx2
 c.close()
 
+print("Finished fetching from db - starting to compute hieratogram data")
 datatoadd=[]
 for k,d in rawHieratogramdata.items():
     hiera_id=d['id']
-    sHieratOutputFileName="h"+str(hiera_id)+".svg"    #hiératogramme h1234.svg par exemple
-    shutil.copy(d['path'],os.path.join(dstimgfolder,sHieratOutputFileName))
+    d["format"]=d["path"].split(".")[-1]
+    if imgFetchMethod=="BASE64":
+        imgfile=open(d["path"],'rb')
+        b64=base64.b64encode(imgfile.read()).decode("ascii")
+        imgfile.close()
+        d["imgsrc"]="data:image/"+("svg+xml" if d["format"]=="svg" else d["format"])+";base64,"+b64
+    else:
+        sHieratOutputFileName="h"+str(hiera_id)+".svg"    #hiératogramme h1234.svg par exemple
+        shutil.copy(d['path'],os.path.join(dstimgfolder,sHieratOutputFileName))
+        d["imgsrc"]="img/"+sHieratOutputFileName
     datatoadd.append(d)
-    if len(d) % 100 ==0:
-        print("Processing " + hiera_id)
+    if len(datatoadd)%500==0:
+        print("Loaded {} hieratograms".format(len(datatoadd)))
 
 def getmdcnormalized(d):
   s=d['MDC']
@@ -261,26 +286,6 @@ for c in sorted(set(dcat.values())):
 sHtml=sHtml.replace("XXXTDFORTEXTCATEGXXX",s)
 sHtml=sHtml.replace("XXXSCRIPTFORTEXTCATEGCLASSESXXX","sCategClasses='"+"/".join(sorted(set(dcat.values())))+"'")
 
-sHtHgVariables="hg={"
-isFirst=True
-for gardikey in signsDict:
- if not(isFirst):
-     sHtHgVariables+=",\n"
- isFirst=False
- b=signsDict[gardikey]
- sHtHgVariables+="'"+gardikey.replace("\\","\\\\") + "': '"+ b['hierog'] + "'"
-sHtHgVariables+="};\nht={"
-isFirst=True
-for gardikey in signsDict:
-  b=signsDict[gardikey]
-  for hd in b["hieratogram_data"]:
-    if not(isFirst):
-        sHtHgVariables+=",\n"
-    isFirst=False
-    sHtHgVariables+="'"+hd['id']+"':'"+gardikey.replace("\\","\\\\")+"'"
-sHtHgVariables+="}\n"
-sHtml=sHtml.replace("XXXHTHGOBJECTSXXX",sHtHgVariables)
-
 sTableContent='<thead><tr>'
 sTableContent+='<th>Gardiner</th>'
 sTableContent+='<th>Möller</th>'
@@ -291,15 +296,14 @@ for ch in column_headers:
  sTableContent+="<th><center>"+column_headers[ch]+"</center></th>"
 sTableContent+="<th>order</th>"
 sTableContent+="<th>translit mdc</th>"
+sTableContent+="<th>is ligat</th>"
 sTableContent+='</tr></thead><tbody>'
 
 
-jsontxtfile=os.path.join(rootdir,"P1_hieratable","IntermediateData","ramsesfrequencies.json")
-frequencies=json.load(open(jsontxtfile))
 csvlines=[]
 for gardikey in signsDict:
  b=signsDict[gardikey]
- #print("Adding all for " + b["gardi"]);
+ print("Adding all for " + b["gardi"]);
  sCurCSVLine=b["gardi"]
  if generateCSVextract:
      sCurCSVLine+="\t"+b["hierog"]
@@ -312,8 +316,7 @@ for gardikey in signsDict:
  if 'N Möller' in b:
     sCurItem2+=b['N Möller']
  sCurItem2+="</td>"
- sCurItem2+='<td><img height="50" width="50"></td>\r'   #on n'affichera l'image qu'au moment où ce sera nécessaire
- #sCurItem2+='<td><img width="50"></td>\r'   #on n'affichera l'image qu'au moment où ce sera nécessaire
+ sCurItem2+='<td><img height="50" width="50" class="lazy" data-src="'+b['imgsrc']+'"></td>\r'
  sCurItem2+='<td>'
  sTranslitUnicode=""
  sTranslitAscii=""
@@ -324,12 +327,12 @@ for gardikey in signsDict:
   sCurItem2+=sTranslitUnicode
  sCurCSVLine+="\t"+sTranslitUnicode+"\t"+sTranslitAscii
  sCurItem2+="</td>\r"
- sCurItem2+="<td>"
- if b["gardi"] in frequencies:
-  sCurItem2+=str(frequencies[b["gardi"]])
- elif "ligature" in b:
-  sCurItem2+="(ligat)"
- sCurItem2+="</td>\r"
+ sCurItem2+="<td>"+str(b["frequency"])+"</td>\r"
+ #if b["gardi"] in frequencies:
+ # sCurItem2+=str(frequencies[b["gardi"]])
+ #elif "ligature" in b:
+ # sCurItem2+="(ligat)"
+ #sCurItem2+="</td>\r"
  hasItem=False;
  nAku=0
  nCrosefinte=0
@@ -351,7 +354,7 @@ for gardikey in signsDict:
     elif hd['extractedFrom']=='Wimmer':
         sCurItem2+="<span class='tooltiptext'>Wimmer<br/>Plate "+hd["wimmerPlate"]+"<br/>"+hd["date"]+"</span>"
         nWimmer=nWimmer+1
-    sCurItem2+='<img />'
+    sCurItem2+='<img class="lazy" data-src="'+hd['imgsrc']+'"/>'
     #sCurItem2+='<img width="50" />'
     sCurItem2+='</div>'
     hasItem=True;
@@ -365,14 +368,18 @@ for gardikey in signsDict:
   tr=b["translit"]
   # on néglige les - et les . dans la colonne qui sert à la recherche (pour pouvoir chercher Hm.t comme Hmt)
   sCurItem2+=",".join(a["ascii"] for a in tr).replace("-","").replace(".","")
- sCurItem2+="</td>" 
+ sCurItem2+="</td>"
+ sCurItem2+="<td>"
+ if "ligature" in b:
+     sCurItem2+="(lig)"
+ sCurItem2+="</td>"
  sCurItem2+="</tr>\r"
  # colonne pour la recherche sur la translitération
  if hasItem:
   sTableContent+=sCurItem2
 
 sHtml=sHtml.replace("XXXMAINTABLECONTENT",sTableContent)
-
+sHtml=sHtml.replace("XXXMAXSIZEXXX",str(len(sHtml)))
 textfile2=open(outhtmlpath,'wb')
 textfile2.write(sHtml.encode("utf8")) 
 textfile2.close()

@@ -10,6 +10,7 @@
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/fixedheader/3.2.4/js/dataTables.fixedHeader.min.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/plug-ins/1.12.1/sorting/natural.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload@17.8.3/dist/lazyload.min.js"></script>
 
 <style>
 /* Pour la progress bar (ou progress circle) du chargement */
@@ -278,7 +279,40 @@ XXXTEXTREGISTRIESCSSXXX
 /*--ENDOFTEXTREGISTRIESCSS--*/
 
 </style>
+
 <script type="text/javascript">
+const lazyLoadMethod="XXXLAZYLOADMETHODXXX";
+if (lazyLoadMethod=="OBSERVER") {
+	document.addEventListener("DOMContentLoaded", function() {
+		doLazyLoad()
+	})
+} else if (lazyLoadMethod=="VANILLA") {
+	var lazyLoadInstance=new LazyLoad({});
+}
+
+function doLazyLoad() {
+	if (lazyLoadMethod=="OBSERVER") {
+		var lazyloadImages;    
+		lazyloadImages = document.querySelectorAll(".lazy");
+		console.log("lazyloadImages has " + lazyloadImages.length + " images");
+		var imageObserver = new IntersectionObserver(function(entries, observer) {
+		  entries.forEach(function(entry) {
+			if (entry.isIntersecting) {
+			  var image = entry.target;
+			  if (image.src==undefined || image.src=="") {image.src = image.dataset.src;}
+			  image.classList.remove("lazy");
+			  image.removeAttribute("data-src");
+			  imageObserver.unobserve(image);
+			}
+		  });
+		});
+		lazyloadImages.forEach(function(image) {
+		  imageObserver.observe(image);
+		})
+	} else if (lazyLoadMethod=="VANILLA") {
+		lazyLoadInstance.update();
+	}
+}
 
 function translitUnicodeToMdc(s) {
 	dTransliteration2Ascii = {'Ḫ':'#', 'H̲':'$','Ṯ':'*','Ḏ':'+','Ḥ':'@','ꜣ':'A','Ś':'C','ḏ':'D','ḥ':'H','Ḳ':'Q','š':'S','ṯ':'T','h̭':'V','ẖ':'X','𓏞':'\\','Š':'^','ꜥ':'a','ś':'c','ỉ':'i','ḳ':'q','ṱ':'v','ḫ': 'x'}
@@ -304,10 +338,9 @@ function hideOrShowSidebar(sSideBar,blShow) {
 	document.getElementById(sSideBar+"Sidebar").style.display=blShow?"block":"none";
 }
 
-
 function generateDrill(nExercises) {
- var divplayarea = document.getElementById("playarea")
  //on va créer un élément avec l'id drill qu'on supprime à chaque début d'exécution
+ var divplayarea = document.getElementById("playarea")
  var olddrill=document.getElementById("drill")
  if (olddrill!=null) {
 	olddrill.remove()
@@ -327,23 +360,29 @@ function generateDrill(nExercises) {
 	//rowid=datatable.row(i).node().getAttribute("id").substring(3);
 	//console.log("Hieros of " + rowid + " has freq " + hrow[4] + " and translit " + hrow[3]);
     //hieros[rowid]=  {'freq': hrow[4], 'translit': hrow[3]}
-	hieros[hrow.DT_RowId.substring(3)]={'freq': hrow[4], 'translit': hrow[3]};
+	hieros[hrow.DT_RowId.substring(3)]={'freq': hrow[4], 'translit': hrow[3], 'lig': hrow[13]};
  }
  
  // on utilise la hashtable ht de tous les hiératogrammes 
  for (h in ht) {
     //console.log(ht[h])
     sFrequency="0"
-    if (typeof hieros[ht[h]] !== "undefined") {
-        if ("freq" in hieros[ht[h]]) {
+	sLig = ""
+	
+    if (typeof hieros[ht[h]] != "undefined") {
+		if ("freq" in hieros[ht[h]]) {
             sFrequency = hieros[ht[h]]["freq"];
-        }
+        } 
+		if ("lig" in hieros[ht[h]]) {
+			sLig=hieros[ht[h]]["lig"];
+		}
     } else {
         console.log("Prob with " + ht[h])
     }
     blInclude=true;
-    if (sFrequency=="(ligat)") {
-        blInclude = blIncludeLigatures
+    if (sLig=="(lig)") {
+        blInclude = blIncludeLigatures;
+		//console.log(ht[h] + " is log so include = " + blInclude);
     } else {
         if (blOnlyFrequent) {
             blInclude = (Number(sFrequency) >= minFrequent)
@@ -380,8 +419,9 @@ function generateDrill(nExercises) {
 	tdiv.setAttribute("class","hier");
     //on va chercher l'image de l'hiératogramme
     hie=ht[arrHieraChosen[i]];
-    imgSrc = "img/h"+arrHieraChosen[i]+".svg";
-    timg1=document.createElement("img")
+    //imgSrc = "img/h"+arrHieraChosen[i]+".svg";
+	imgSrc=imageSources[arrHieraChosen[i]];
+    timg1=document.createElement("img");
     timg1.setAttribute("src",imgSrc);
     tdiv.appendChild(timg1);
 	td.appendChild(tdiv);
@@ -556,7 +596,7 @@ function applyPageParams(params) {
 }
 
 function emptyAll() {
-	applyPageParams({"gardi":"","moeller":"","mdc":"","t":"exact","filteringType":"or","includeLigs":"1","minfreq":"5","onlyfreq":"0","lang":"fr"});
+	applyPageParams({"gardi":"","moeller":"","mdc":"","t":"exact","filteringType":"or","includeLigs":"1","minfreq":"100","onlyfreq":"0","lang":"fr"});
 }
 
 function changeNoColor() {
@@ -622,23 +662,33 @@ function toggleClassVisibility(sClassName,blVisible) {
      
  
 
-function displayImageForDatatableRow( row, aData, iDisplayIndex ) {
-	if ($('td:eq(2) > img', row)[0].getAttribute("src") == null) {
-		/* image not initialized yet */
-		sGardi=row.getAttribute("id").substring(3);
-        imgSrc = "img/"+hg[sGardi];
-        row.getElementsByTagName('td')[2].getElementsByTagName('img')[0].setAttribute("src",imgSrc);
-        hi=row.getElementsByClassName("hier");
-        for (i=0;i<hi.length;i++) {
-          hie=hi[i];
-          id=hie.getAttribute("id");
-          imgSrc="img/h"+id+".svg";
-          hie.getElementsByTagName("img")[0].setAttribute("src",imgSrc);
-        }
+function datatablesRowCallbackFunction( row, aData, iDisplayIndex ) {
+	if (lazyLoadMethod=="DATATABLESCALLBACK") {
+		if ($('td:eq(2) > img', row)[0].getAttribute("src") == null) {
+			/* image not initialized yet */
+			//sGardi=row.getAttribute("id").substring(3);
+			//imgSrc = "img/"+hg[sGardi];
+			var img=$('td:eq(2) > img', row)[0];
+			imgSrc=img.getAttribute("data-src");
+			img.setAttribute("src",imgSrc);
+			img.classList.remove("lazy");
+			img.removeAttribute("data-src");
+			hi=row.getElementsByClassName("hier");
+			for (i=0;i<hi.length;i++) {
+			  hie=hi[i];
+			  //id=hie.getAttribute("id");
+			  //imgSrc="img/h"+id+".svg";
+			  var img= hie.getElementsByTagName("img")[0];
+			  imgSrc=img.getAttribute("data-src");
+			  //hie.getElementsByTagName("img")[0].setAttribute("src",imgSrc);
+			  img.setAttribute("src",imgSrc);
+			  img.classList.remove("lazy");
+			  img.removeAttribute("data-src");
+			}
+		}
+		return row;
 	}
-    return row;
 };
-
 
 </script>
 <body>
@@ -666,14 +716,14 @@ function displayImageForDatatableRow( row, aData, iDisplayIndex ) {
 <br/>
 <script>
 
-//le chargement peut être mesuré de la façon suiante: d'abord la taille du innerHTML augmente jusqu'à environ 4.5 MB, puis les datatables interviennent et on retombe à 600K environ (passage de <table> à datatable)
+//le chargement peut être mesuré de la façon suivante: d'abord la taille du innerHTML augmente jusqu'à environ 4.5 MB, puis les datatables interviennent et on retombe à 600K environ (passage de <table> à datatable)
 // on va donc considérer que la partie initiale d'augmentation de la taille représente 0-80%, puisque quand ça diminue, on a atteint les 90% (les 10 derniers pourcents servant au rendu visuel)
 maxReached=0;
 function updateLoadProgressBar() {
-	nMax=5000000;
+	nMax=XXXMAXSIZEXXX;
 	curSize =document.documentElement.innerHTML.length;
 	console.log(curSize);
-	if (curSize<maxReached*0.9) {nPercent=90;}
+	if (curSize<maxReached*0.9) {nPercent=90;}	//ceci signifie que la taille a significativement diminué -> on a déjà processé une partie des datatables
 	else if (curSize>maxReached) {maxReached=curSize; nPercent=Math.min(maxReached/nMax*80,80);};
     if (nPercent < 0) { nPercent = 0;}
     if (nPercent > 100) { nPercent = 100;}
@@ -817,7 +867,7 @@ loaderInterval=setInterval(updateLoadProgressBar, 100);
                     <td>
                         <span class="fr_lang">Seulement les signes fréquents</span><span class="en_lang">Only frequent signs</span>
                         <br/>
-                        n Ramses &gt;=<input style="width: 4em" type="number" id="minFrequent" value="5"></td></tr>
+                        n Ramses &gt;=<input style="width: 8em" type="number" id="minFrequent" value="100"></td></tr>
 		<tr><td><input type="checkbox" id="check_includeLigatures" checked></td>
                     <td>
                         <span class="fr_lang">Inclure les ligatures et groupements</span><span class="en_lang">Include ligatures and groups</span>
@@ -865,17 +915,17 @@ XXXTDFORTEXTCATEGXXX
 XXXSCRIPTFORTEXTCATEGCLASSESXXX
 //--ENDSCRIPTFORTEXTCATEGCLASSES--
 </script>
-<script>
-//--STARTDEFINITIONOFHGHTOBJECTS--
-XXXHTHGOBJECTSXXX
-//--ENDDEFINITIONOFHGHTOBJECTS--
-</script><table id="maintable" border="1">
+<table id="maintable" border="1">
 <!--STARTMAINTABLECONTENT-->
 XXXMAINTABLECONTENT
 <!--ENDMAINTABLECONTENT-->
 </table>
-</div></body>
+</div>
+</body>
 <script>
+if (lazyLoadMethod=="VANILLA") {
+	lazyLoadInstance.update();
+}
 function isMatch(searchString,dataToCompare,nSearchType,nField) {
 	//dataToCompare is an array of values (for instance ["wrd","Hms"] with which searchString will be compared)
 	//nSearchType=1 for exact, 2 for contains, 3 for regex
@@ -925,7 +975,7 @@ function isMatch(searchString,dataToCompare,nSearchType,nField) {
 }
 $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
     var min = parseInt($("#minFrequent").val(),10);
-    var isLigat=(data[4]=="(ligat)");
+    var isLigat=(data[13]=="(lig)");
     var nRamses = parseFloat(data[4]) || 0; 
     var blOnlyFrequent = $("#check_onlyfrequent")[0].checked;
     var blIncludeLigatures = $("#check_includeLigatures")[0].checked;
@@ -940,7 +990,7 @@ $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
     if (typeof(searchMöller)=="undefined") {searchMöller=""};
     if (typeof(searchMdc)=="undefined") {searchMdc=""};
     searchMdc=translitUnicodeToMdc(searchMdc).replace("-","").replace(".","");
-    if (blOnlyFrequent && (!isLigat) && (min>nRamses)) {return false;}
+    if (blOnlyFrequent && (min>nRamses)) {return false;}
     if (isLigat && (!blIncludeLigatures)) {return false;}
 	if ((searchGardi!="") || (searchMöller!="") || (searchMdc!="")) {
 		blResult=false;
@@ -965,33 +1015,46 @@ $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
 			bl=isMatch(searchMdc,data[12].split(","),nSearchType,3);
 			switch (nFilteringType) {
 				case 1: blResult=bl;
-				case 2: blResult=blResult && bl;
 				case 3: blResult=blResult || bl;
+				case 2: blResult=blResult && bl;
 			}
 		}
 		return blResult;
     } else {
-        //console.log("Triggered search");
-        if (isLigat) {
-            return blIncludeLigatures;
-        } else if (!blOnlyFrequent) {
-            return true;
-        } else if (min<=nRamses) {
-            return true;
-        } else {
-            return false;
-        }
+		return true;
     }
 });
 
-
 $('#maintable thead tr').clone(true).addClass('filters').appendTo('#maintable thead');
+
+//initialize ht, i.e. a key-value javascript object with elements of the form 'UAT28_S_10_9_7783_3372_163_220':'A2', ... i.e. keys are hieratogram ids, while values are gardiner/mdc codes
+//also initialize imageSources, i.e. e key-value javascript object with elements of the form 'UAT28_S_10_9_7783_3372_163_220':'img/UAT28_S_10_9_7783_3372_163_220.svg',
+//i.e. keys are hieratogram ids, while values are the corresponding imgSrc (which may be URLs - absolute or relative - or base64 inline)
+var ht={};
+var imageSources={}
+allHierDiv=$('.hier');
+for (i=0;i<allHierDiv.length;i++) {
+	ht[allHierDiv[i].getAttribute("id")]=allHierDiv[i].parentNode.parentNode.getAttribute("id").substring(3)
+	sImg=$(allHierDiv[i]).children("img")[0].getAttribute("data-src");
+	if (sImg==null) {sImg=$(allHierDiv[i]).children("img")[0].getAttribute("src");}	//already lazy-loaded for some reason
+	imageSources[allHierDiv[i]["id"]]=sImg
+}
+var hg={};
+//initialize hg, i.e a key-value javascript object with elements of the form 'A1+N35': 'g5.svg', i.e. keys are gardiner/mdc codes and values are image filenames
+allTableRows=$("#maintable tr");
+for (i=2;i<allTableRows.length;i++) {	//item 0 is table header, item 1 is filters
+	sMdc=allTableRows[i].getAttribute("id").substring(3);
+	sImg=$($(allTableRows[i]).children("td")[2]).children("img")[0].getAttribute("data-src");
+	if (sImg==null) {sImg=$($(allTableRows[i]).children("td")[2]).children("img")[0].getAttribute("src");}	//already lazy-loaded for some reason
+	hg[sMdc]=sImg.split("/")[1];
+}
 
 var datatable = $('#maintable').DataTable( {
     orderCellsTop: true,
     fixedHeader: true,
-    "fnRowCallback": displayImageForDatatableRow,
 	"autoWidth": false,
+	"drawCallback": doLazyLoad,
+	"fnRowCallback": datatablesRowCallbackFunction,
     "dom": "iptl",
     fixedColumns: true,
 	"columnDefs": [
@@ -1001,7 +1064,8 @@ var datatable = $('#maintable').DataTable( {
 		{ "width": "50px", "targets": 3 },
         { "orderData": [11], "targets": 0 },
         { "targets": [11], "searchable": false, "visible": false    },
-        { "targets": [12], "visible": false    }
+        { "targets": [12], "visible": false    },
+		{ "targets": [13], "visible": false    }
 	],
     initComplete: function() {
         var api=this.api();
