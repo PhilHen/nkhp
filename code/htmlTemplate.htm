@@ -114,8 +114,34 @@ img {
  padding: 3px;
 }
 .exercisesTable {
-  margin-left: 60
+  margin: 12px auto;
+  border: 1px solid;
+  border-collapse: collapse;
+  background-color: #fff;
 }
+
+.exercisesTable td {
+  border: 1px solid;
+  text-align: center;
+  padding: 10px;
+}
+
+
+.exercisesTable th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: center;
+  background-color: #04AA6D;
+  color: white;
+  min-width: 30px;
+  padding: 10px;
+}
+
+.exerciseInput {
+  width: 80px;
+  background-color: yellow;
+}
+
 
 table {
 	border-collapse:collapse;
@@ -165,17 +191,20 @@ ul{ margin-top:0; margin-bottom:0 }
   overflow-y: scroll;
 }
 
-#drillSidebar {
+#playSidebar {
   position: fixed;
   top: 0;
   right: 0;
-  width: 50%;
+  width: 70%;
   height: 100%;
   opacity:1;
   background-color:#d3d3d3;
   z-index: 10;
   display: none;
   overflow-y: scroll;
+  min-width: 650px;
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
 #thanksSidebar {
@@ -184,6 +213,7 @@ ul{ margin-top:0; margin-bottom:0 }
   top: 0;
   right: 0;
   width: 50%;
+ 
   height: 100%;
   opacity: 1;
   /*background-color:#d3d3d3;*/
@@ -273,6 +303,163 @@ ul{ margin-top:0; margin-bottom:0 }
   visibility: visible;
 }
 
+
+/*Formulaire pour la configuration des exercices*/
+
+form {
+	background-color: #fff;
+	max-width: 500px;
+	margin: 50px auto;
+	padding: 30px 20px;
+	box-shadow: 2px 5px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Styling form-control Class */
+.form-control {
+	text-align: left;
+	margin-bottom: 25px;
+}
+
+/* Styling form-control Label */
+.form-control label {
+	display: block;
+	margin-bottom: 10px;
+}
+
+/* Styling form-control input,
+select, textarea */
+.form-control input,
+.form-control select,
+.form-control textarea {
+	border: 1px solid #777;
+	border-radius: 2px;
+	font-family: inherit;
+	padding: 10px;
+	display: block;
+	width: 95%;
+}
+
+/* Styling form-control Radio
+button and Checkbox */
+.form-control input[type="radio"],
+.form-control input[type="checkbox"] {
+	display: inline-block;
+	width: auto;
+}
+
+/* Styling Button */
+button {
+	background-color: #04AA6D;
+	border: 1px solid #777;
+	border-radius: 2px;
+	font-family: inherit;
+	font-size: 21px;
+	color: white;
+	display: block;
+	/*margin-top: 50px;
+	margin-bottom: 20px; */
+}
+
+.topPlayButtonBar {
+	width: 90%;
+	display: flex;
+	justify-content: space-between;
+	padding-top: 30px;
+}
+
+
+/* Configuration des exercices*/
+.flexcenter {
+	display:flex;
+	align-items:center;
+	justify-content:center;
+}
+
+.playConfigurationItemGroup {
+	display:inline-block;
+	margin-top: 10px;
+	margin-left: 5px;
+	margin-right: 5px;
+	vertical-align: top;	
+	margin-bottom: 5px;
+}
+
+
+.playConfigurationItem {
+	background-color: #fff;
+	text-align: left;
+	padding: 5px;
+	display:block;
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+.playConfigurationItemInfo {
+	/*background-color: #fff; */
+	text-align: left;
+	padding: 5px;
+	display:block;
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+.playConfigurationItemFlex {
+	background-color: #fff;
+	text-align: left;
+	padding: 5px;
+	display:flex;
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+	
+.playConfigurationItem label {
+	display: block;
+}
+.playConfigurationItem input {
+	border: 1px solid #777;
+	border-radius: 2px;
+	font-family: inherit;
+	/*padding: 10px;
+	display: block;
+	width: 95%;*/
+}
+
+.playConfigurationItem input[type="number"] {
+	width: 3em;
+}
+
+.playConfigurationItem  input[type="radio"],
+.playConfigurationItem  input[type="checkbox"] {
+	display: inline-block;
+	width: auto;
+}
+
+.playConfigurationItemTitle {
+	font-weight: bold;
+}
+
+.playConfigurationItemTitleFlexCenter {
+	display: flex;
+	font-weight: bold;
+	align-items:center;
+	justify-content:center;
+}
+
+
+.playConfigurationResetImg {
+	width: 30px;
+	height: 30px;
+}
+
+
+#gameScore {
+	text-align: center;
+    margin-top: 20px;
+    font-size: 30;
+    font-weight: bold;
+    color: red;
+}
+
 /* Registres de textes */
 /*--INSERTTEXTREGISTRIESCSSHERE--*/
 XXXTEXTREGISTRIESCSSXXX
@@ -281,7 +468,10 @@ XXXTEXTREGISTRIESCSSXXX
 </style>
 
 <script type="text/javascript">
+const nPeriodColumns=6;	//from 0 to nPeriodColumns-1
 const lazyLoadMethod="XXXLAZYLOADMETHODXXX";
+var gameStatus = 1;
+var currentLanguage='';
 if (lazyLoadMethod=="OBSERVER") {
 	document.addEventListener("DOMContentLoaded", function() {
 		doLazyLoad()
@@ -338,137 +528,6 @@ function hideOrShowSidebar(sSideBar,blShow) {
 	document.getElementById(sSideBar+"Sidebar").style.display=blShow?"block":"none";
 }
 
-function generateDrill(nExercises) {
- //on va créer un élément avec l'id drill qu'on supprime à chaque début d'exécution
- var divplayarea = document.getElementById("playarea")
- var olddrill=document.getElementById("drill")
- if (olddrill!=null) {
-	olddrill.remove()
- }
- 
- blOnlyFrequent = document.getElementById("check_onlyfrequent").checked;
- blIncludeLigatures = document.getElementById("check_includeLigatures").checked;
- minFrequent = Number(document.getElementById("minFrequent").value);
- 
- 
- var hieros={};
- var arrHiera=[];
- var arrHieraChosen=[];
- /* on construit un hashtable de tous les hiéroglyphes avec leur fréquence au départ des données dataTable */
- for (var i=0;i<datatable.rows().data().length;i++) {
-    hrow=datatable.rows().data()[i];
-	//rowid=datatable.row(i).node().getAttribute("id").substring(3);
-	//console.log("Hieros of " + rowid + " has freq " + hrow[4] + " and translit " + hrow[3]);
-    //hieros[rowid]=  {'freq': hrow[4], 'translit': hrow[3]}
-	hieros[hrow.DT_RowId.substring(3)]={'freq': hrow[4], 'translit': hrow[3], 'lig': hrow[13]};
- }
- 
- // on utilise la hashtable ht de tous les hiératogrammes 
- for (h in ht) {
-    //console.log(ht[h])
-    sFrequency="0"
-	sLig = ""
-	
-    if (typeof hieros[ht[h]] != "undefined") {
-		if ("freq" in hieros[ht[h]]) {
-            sFrequency = hieros[ht[h]]["freq"];
-        } 
-		if ("lig" in hieros[ht[h]]) {
-			sLig=hieros[ht[h]]["lig"];
-		}
-    } else {
-        console.log("Prob with " + ht[h])
-    }
-    blInclude=true;
-    if (sLig=="(lig)") {
-        blInclude = blIncludeLigatures;
-		//console.log(ht[h] + " is log so include = " + blInclude);
-    } else {
-        if (blOnlyFrequent) {
-            blInclude = (Number(sFrequency) >= minFrequent)
-        }
-    }
-	if (blInclude) {
-		arrHiera.push(h);
-	}
- }
- if (nExercises>arrHiera.length-1) {nExercises=arrHiera.length-1;}
- //créer un tableau avec nExercises hiératogrammes choisis au hasard
- for (var i=0; i<nExercises; i++) {
-  indexChosen = Math.floor(Math.random() * arrHiera.length);
-  arrHieraChosen.push(arrHiera[indexChosen]);
-  arrHiera.splice(indexChosen,1);
- }
- divplay = document.createElement("div")
- divplay.setAttribute("id","drill")
- tb = document.createElement("table");
- tb.setAttribute("class","exercisesTable");
- tb.setAttribute("border","1");
- tb.setAttribute("id","drillTable");
- arrCols="col_hierato/col_mdc/col_hiero/col_translit".split("/")
- for (i=0;i<arrCols.length;i++) {
-  tcol = document.createElement("col");
-  tcol.setAttribute("class",arrCols[i]);
-  tb.appendChild(tcol);
- }
-  
- for (var i=0; i<arrHieraChosen.length; i++) {
-	trow = document.createElement("tr");
-	td=document.createElement("td");
-    tdiv=document.createElement("div")
-	tdiv.setAttribute("class","hier");
-    //on va chercher l'image de l'hiératogramme
-    hie=ht[arrHieraChosen[i]];
-    //imgSrc = "img/h"+arrHieraChosen[i]+".svg";
-	imgSrc=imageSources[arrHieraChosen[i]];
-    timg1=document.createElement("img");
-    timg1.setAttribute("src",imgSrc);
-    tdiv.appendChild(timg1);
-	td.appendChild(tdiv);
-    trow.appendChild(td);
-    
-    //on va chercher le code Gardiner
-	td=document.createElement("td");
-	ttext=document.createTextNode(hie);
-	td.appendChild(ttext);
-	trow.appendChild(td)
-
-    //on va chercher l'image du hiéroglyphe
-	td=document.createElement("td");
-    imgSrc = "img/"+hg[hie];
-	timg2 = document.createElement("img");
-	timg2.setAttribute("src",imgSrc);
-	timg2.setAttribute("height","50");
-	timg2.setAttribute("width","50");
-	td.appendChild(timg2);
-	trow.appendChild(td)
-
-    td=document.createElement("td");
-	//console.log(hie);
-    td.innerHTML=hieros[hie]["translit"];
-    trow.appendChild(td);
-    
-	tb.appendChild(trow);
- }
- 
- //cacher les colonnes
- tb.getElementsByClassName("col_mdc")[0].style.visibility="collapse";
- tb.getElementsByClassName("col_hiero")[0].style.visibility="collapse";
- tb.getElementsByClassName("col_translit")[0].style.visibility="collapse";
- 
- divplay.appendChild(tb);
- divplayarea.appendChild(divplay);
- 
- document.getElementById("showAnswersButton").removeAttribute("hidden");
-}
-function showAnswers() {
- var tb=document.getElementById("drillTable");
- tb.getElementsByClassName("col_mdc")[0].style.visibility="";
- tb.getElementsByClassName("col_hiero")[0].style.visibility="";
- tb.getElementsByClassName("col_translit")[0].style.visibility="";
- document.getElementById("showAnswersButton").setAttribute("hidden","hidden");
-}
-
 function setDisplayedURL(s) {
 	document.getElementById("cururl").href=s;
 	document.getElementById("cururl").innerHTML=s;
@@ -523,6 +582,7 @@ function switchLanguage(activeLang) {
     $("#lang-switch ."+activeLang).addClass("active-flag");
     $("#lang-switch ."+otherLang).removeClass("active-flag");
 	setDisplayedURL(computeURL());
+	currentLanguage=activeLang;
 }
 
 document.onreadystatechange = function() {
@@ -690,6 +750,252 @@ function datatablesRowCallbackFunction( row, aData, iDisplayIndex ) {
 	}
 };
 
+function resetPlayCriteria() {
+	categClasses = sCategClasses.split("/");
+	for (i=0;i<categClasses.length;i++) {
+		document.getElementById("checkPlayConfigTextType"+categClasses[i]).checked=true;
+	}
+	for (i=0;i<nPeriodColumns;i++) {
+		document.getElementById("checkPlayConfigPeriod"+i).checked=true;
+	}
+	document.getElementById("radioPlayConfigFrequencyAll").checked=true;
+	document.getElementById("checkPlayConfigIncludeLig").checked=true;
+	e=document.getElementById("numPlayConfigHieraPerSign");e.value=e.getAttribute("defvalue");
+	e=document.getElementById("numPlayExercises");e.value=e.getAttribute("defvalue");
+	updatePlayConfig();
+}
+
+var signsSuitableForGame=[];
+
+function computeSignsSuitableForGame() {
+  acceptableTextTypes=[];
+  categClasses = sCategClasses.split("/");
+  for (i=0;i<categClasses.length;i++) {
+	if (document.getElementById("checkPlayConfigTextType"+categClasses[i]).checked) acceptableTextTypes.push(categClasses[i]);
+  }  
+  if (acceptableTextTypes.includes("C99-OTH")) acceptableTextTypes.push("C98-UNK");		//"other" is a special category
+  acceptablePeriods = [];
+  for (i=0;i<nPeriodColumns;i++) {
+	if (document.getElementById("checkPlayConfigPeriod"+i).checked) acceptablePeriods.push(i);
+  }
+  suitableHieratogramIds=[];
+  for (const hm in ht) {
+	if (acceptableTextTypes.includes(ht[hm]["texttype"]) && acceptablePeriods.includes(ht[hm]["period"])) {
+		suitableHieratogramIds.push(hm);
+	}
+  }
+  hgwithht={};		//object of hieroglyphs with suitable hieratograms assigned to each
+  for (const h in hg) {
+	obj=hg[h];
+	obj["hts"]=[];
+	hgwithht[h]=obj;
+  }
+  for (i=0;i<suitableHieratogramIds.length;i++) {
+    hi = suitableHieratogramIds[i];
+	hgwithht[ht[hi]["hiero"]]["hts"].push(hi);
+  }
+  
+  //now we arrange this into an array, applying the filters on the hieroglyphs themselves
+  //we also make sure there are enough hieratograms per hieroglyph
+  signsSuitableForGame=[];
+  for (const h in hgwithht) {
+	if (!(!document.getElementById("checkPlayConfigIncludeLig").checked && hgwithht[h]["lig"]==true)) {	//sign is unsuitable if we don't include ligatures but h is a ligature
+		if (parseInt(document.getElementById("numPlayConfigHieraPerSign").value)<=hgwithht[h]["hts"].length) {
+			obj=hgwithht[h];
+			obj["id"]=h;
+			signsSuitableForGame.push(hgwithht[h]);
+		}
+	}
+  }
+  
+ //now we sort the acceptable signs by decreasing frequency and cut off if necessary
+ signsSuitableForGame=signsSuitableForGame.sort((a,b)=>b["freq"]-a["freq"]);
+ nCutOff=-1;
+ if (document.getElementById("radioPlayConfigFrequencyTop50").checked) nCutOff=50;
+ if (document.getElementById("radioPlayConfigFrequencyTop100").checked) nCutOff=100;
+ if (document.getElementById("radioPlayConfigFrequencyTop200").checked) nCutOff=200;
+ if (nCutOff>0) signsSuitableForGame=signsSuitableForGame.slice(0, nCutOff);
+  
+ console.log(signsSuitableForGame.length + " signs are acceptable");
+}
+
+function updatePlayConfig() {
+	computeSignsSuitableForGame();
+	document.getElementById("gameNumberEligible").innerHTML=signsSuitableForGame.length;
+}
+
+function updatePlayAreaDisplay() {
+	//make parts of the display visible or not according to gameStatus
+	listElements=["buttonGameConfigure","buttonGameGenerate","buttonGameShowAnswers","playConfiguration","game","gameScore"]
+	visibleElements=[];
+	switch (gameStatus) {
+		case 1: {visibleElements=["buttonGameGenerate","playConfiguration"]; break;}
+		case 2: {visibleElements=["buttonGameConfigure","buttonGameShowAnswers","game","gameScore"]; break;}
+		case 3: {visibleElements=["buttonGameConfigure","buttonGameGenerate","game","gameScore"]; break;}
+	}
+	for (i=0;i<listElements.length;i++) {
+		invisibleElementsThatTakeUpSpace=["buttonGameGenerate","buttonGameConfigure","buttonGameShowAnswers"];
+		x=listElements[i];
+		if (document.getElementById(x)!=null) {		//some elements - like game - are created dynamically
+			if (invisibleElementsThatTakeUpSpace.includes(x)) {
+				h=""; if (!visibleElements.includes(x)) h="hidden";	//this element is not among the visible ones
+				document.getElementById(x).style.visibility=h; 
+			} else {
+				d=""; if (!visibleElements.includes(x)) d="none";
+				document.getElementById(x).style.display=d;
+			}
+		}
+	}
+}
+
+function gameConfigure () {
+	gameStatus = 1;
+	updatePlayAreaDisplay();
+	updatePlayConfig();
+}
+function gameGenerate () {
+	computeSignsSuitableForGame();
+	gameStatus = 2;
+	 //on va créer un élément avec l'id game qu'on supprime à chaque début d'exécution
+	var divplayarea = document.getElementById("playarea")
+	var oldgame=document.getElementById("game")
+	if (oldgame!=null) oldgame.remove();
+	var oldscore=document.getElementById("gameScore");
+	if (oldscore!=null) oldscore.remove();
+	
+	divplay=document.createElement("div");
+	divplay.setAttribute("id","game");
+	tb=document.createElement("table");
+	tb.setAttribute("class","exercisesTable");
+	tb.setAttribute("id","gameTable");
+	trow = document.createElement("tr");
+	th=document.createElement("th");
+	th.innerHTML="#";
+	trow.appendChild(th);
+	th = document.createElement("th");
+	th.innerHTML="Hierato"
+	trow.appendChild(th);
+	th=document.createElement("th");
+	th.innerHTML='<span class="fr_lang">Gardiner<br/> ou translit</span><span class="en_lang">Gardiner<br/> or translit</span>'
+	trow.appendChild(th);
+	tb.appendChild(trow);
+	
+		
+	nExercises=parseInt(document.getElementById("numPlayExercises").value)
+	for (var i=0; i<nExercises; i++) {
+		indexChosen = Math.floor(Math.random() * signsSuitableForGame.length);
+		curSign=signsSuitableForGame[indexChosen];
+		signsSuitableForGame.splice(indexChosen,1);
+		trow = document.createElement("tr");
+		trow.setAttribute("sign",curSign["id"]);
+		td=document.createElement("td");
+		td.innerHTML=(i+1);
+		trow.appendChild(td);
+		td=document.createElement("td");
+		//chose hieratograms for this sign
+		nHierat=parseInt(document.getElementById("numPlayConfigHieraPerSign").value);
+		for (var j=0;j<nHierat;j++) {
+			k = Math.floor(Math.random() * curSign["hts"].length);
+			curHierat=curSign["hts"][k];
+			curSign["hts"].splice(k,1);
+			tdiv=document.createElement("div");
+			tdiv.setAttribute("class","hier");
+			tdiv.classList.add(ht[curHierat]["texttype"]);
+			tspan=document.createElement("span");
+			tspan.setAttribute("class","tooltiptext");
+			tspan.innerHTML=ht[curHierat]["tooltiptext"]
+			tdiv.appendChild(tspan);
+			timg=document.createElement("img");
+			timg.setAttribute("src",ht[curHierat]["img"]);
+			tdiv.appendChild(timg);
+			td.appendChild(tdiv);
+		}
+		trow.appendChild(td);
+		td=document.createElement("td");
+		td.innerHTML='<input id="answer'+i+'" type="text" class="exerciseInput">';
+		trow.appendChild(td);
+		tb.appendChild(trow);
+	}
+	
+	divplay.appendChild(tb);
+	divplayarea.appendChild(divplay);
+	var elements = document.getElementsByClassName("exerciseInput");
+	for (var i = 0; i < elements.length; i++) {
+		elements[i].addEventListener('input', onExerciseInputChange, false);
+	}
+	updatePlayAreaDisplay();
+	switchLanguage(currentLanguage);
+}
+function gameShowAnswers () {
+	gameStatus = 3;
+	//first we add the columns
+	tb = document.getElementById("gameTable");
+	if (tb==null) return;
+	rows=tb.getElementsByTagName("tr");
+	console.log("At the start")
+	for (i=0;i<rows.length;i++) {
+		tr=rows[i];
+		if (i==0) {	//headers
+			for (j=0;j<3;j++) {
+				th=document.createElement("th");
+				th.innerHTML=["Hierog","Gardiner","Translit"][j];
+				tr.appendChild(th);
+			}
+		} else {	//data
+			mdc=tr.getAttribute("sign");
+			td=document.createElement("td");
+			timg=document.createElement("img");
+			timg.setAttribute("src",hg[mdc]["img"]);
+			timg.setAttribute("height","50");
+			timg.setAttribute("width","50");
+			td.appendChild(timg);
+			tr.appendChild(td);
+			td=document.createElement("td");
+			ttext=document.createTextNode(hg[mdc]["id"]);
+			td.appendChild(ttext);
+			tr.appendChild(td);
+			td=document.createElement("td");
+			ttext=document.createTextNode(hg[mdc]["translit"]);
+			td.appendChild(ttext);
+			tr.appendChild(td);
+		}
+	}
+	//now, let's correct the answers given
+	scoreDenominator = rows.length-1;
+	score=0
+	for (var ii=1;ii<rows.length;ii++) {
+		tr=rows[ii];
+		mdc=tr.getAttribute("sign");
+		studentInput=tr.getElementsByTagName("td")[2].getElementsByTagName("input")[0];
+		studentInput.style.backgroundColor="white";
+		studentAnswer=studentInput.value;
+		isCorrect=false;
+		if (studentAnswer!="") {
+			console.log("Checking if " + studentAnswer + " matches " + mdc);
+			isCorrect=(isMatch(studentAnswer,hg[mdc]["allgardiner"].split(", "),1,1) || isMatch(studentAnswer,hg[mdc]["translitmdc"].split(","),1,3));
+		}
+		newColor = (isCorrect ? "#04AA6D" : "red")
+		tr.getElementsByTagName("td")[2].style.backgroundColor=newColor;
+		if (!isCorrect) {studentInput.style.textDecoration="line-through";}
+		if (isCorrect) {score+=1}
+	}
+	pa=document.getElementById("playarea");
+	tdiv=document.createElement("div");
+	g=document.getElementById("game");
+	tdiv.setAttribute("id","gameScore");
+	tdiv.innerHTML=score+" / "+scoreDenominator;
+	pa.insertBefore(tdiv,g);
+	updatePlayAreaDisplay();
+	switchLanguage(currentLanguage);
+}
+
+function onExerciseInputChange (){
+	this.style.backgroundColor=(this.value=="" ? "yellow" : "transparent");	//'inline if', meaning background is yellow if input is empty
+}
+
+
+
+
 </script>
 <body>
 <div id="loading_container">
@@ -704,11 +1010,66 @@ function datatablesRowCallbackFunction( row, aData, iDisplayIndex ) {
 <div class="topRowParent" id="topRow">
 	<div class="topRowChild" id="urlarea" style="visibility:hidden;"><span class="fr_lang"><b>URL du filtre en cours:</b></span><span class="en_lang"><b>URL of current filter:</b></span> <a id="cururl" href='placeholder'>placeholder</a></div>
 </div>
-<div id="drillSidebar"><a href="javascript:void(0)" class="closebtn" onclick="hideOrShowSidebar('drill',false)">&times;</a>
+<div id="playSidebar"><a href="javascript:void(0)" class="closebtn" onclick="hideOrShowSidebar('play',false)">&times;</a>
 	<div id="playarea" style="visibility:hidden;">
 		<center>
-			<button onclick="generateDrill(30)"><div class="fr_lang">Génère exercices</div><div class="en_lang">Generate random test</div></button>
-			<button id="showAnswersButton" hidden onclick="showAnswers()"><div class="fr_lang">Montre solutions</div><div class="en_lang">Show answers</div></button>
+			<div class="topPlayButtonBar">
+				<button id="buttonGameConfigure" onclick="gameConfigure()"><div class="fr_lang">Configure les exercices</div><div class="en_lang">Exercise parameters</div></button>
+				<button id="buttonGameGenerate" onclick="gameGenerate()"><div class="fr_lang">Génère une série d'exercices</div><div class="en_lang">Generate a series of exercisest</div></button>
+				<button id="buttonGameShowAnswers" hidden onclick="gameShowAnswers()"><div class="fr_lang">Corrige les réponses</div><div class="en_lang">Check answers</div></button>
+			</div>
+			<div id="playConfiguration">
+				<div class="playConfigurationItemGroup"><div class="playConfigurationItem">
+					<label class="playConfigurationItemTitle"><span class="fr_lang">Types de texte</span><span class="en_lang">Text types</span></label>
+					XXXPLAYCONFIGINPUTTEXTTYPESXXX
+				</div></div>
+				<div class="playConfigurationItemGroup"><div class="playConfigurationItem">
+					<label class="playConfigurationItemTitle"><span class="fr_lang">Périodes</span><span class="en_lang">Periods</span></label>
+					XXXPLAYCONFIGPERIODSXXX
+				</div></div>
+				<div class="playConfigurationItemGroup">
+					<div class="playConfigurationItem">
+						<label class="playConfigurationItemTitle"><span class="fr_lang">Fréquence</span><span class="en_lang">Frequency</span></label>
+						<label><input type="radio" onchange="updatePlayConfig()" id="radioPlayConfigFrequencyTop50" name="radioPlayConfigFrequency"><span class="fr_lang">50 signes les plus fréquents</span><span class="en_lang">50 most frequent signs</span></input></label>
+						<label><input type="radio" onchange="updatePlayConfig()" id="radioPlayConfigFrequencyTop100" name="radioPlayConfigFrequency"><span class="fr_lang">100 signes les plus fréquents</span><span class="en_lang">100 most frequent signs</span></input></label>
+						<label><input type="radio" onchange="updatePlayConfig()" id="radioPlayConfigFrequencyTop200" name="radioPlayConfigFrequency"><span class="fr_lang">200 signes les plus fréquents</span><span class="en_lang">200 most frequent signs</span></input></label>
+						<label><input type="radio" onchange="updatePlayConfig()" id="radioPlayConfigFrequencyAll"  name="radioPlayConfigFrequency" checked><span class="fr_lang">tous les signes</span><span class="en_lang">all signs</span></input></label>
+					</div>
+					<div class="playConfigurationItem">
+						<label class="playConfigurationItemTitle"><input type="checkbox" onchange="updatePlayConfig()" id="checkPlayConfigIncludeLig" checked>
+						<span class="fr_lang">Inclure les groupes et ligatures</span><span class="en_lang">Include groups and ligatures</span></input></label>
+					</div>
+				</div>
+				<div class="playConfigurationItemGroup">
+					<div class="playConfigurationItem">
+						<label class="playConfigurationItemTitle">
+							<input type="number" onchange="updatePlayConfig()" id="numPlayConfigHieraPerSign" defvalue="3" value="3" min="1" max="10">
+								<span class="fr_lang"> hiératogrammes par signe</span><span class="en_lang"> hieratograms per sign</span>
+							</input>
+						</label>
+					</div>
+					<div class="playConfigurationItem">
+						<label class="playConfigurationItemTitle">
+							<input type="number" onchange="updatePlayConfig()" id="numPlayExercises" defvalue="20" value="20" min="5" max="50">
+								<span class="fr_lang"> exercices</span><span class="en_lang"> exercises</span>
+							</input>
+						</label>
+					</div>
+					<div class="playConfigurationItemInfo">
+						<label class="playConfigurationItemTitle">
+							<span id="gameNumberEligible">x</span><span class="fr_lang"> signes éligibles</span><span class="en_lang"> eligible signs</span>
+						<label>
+					</div>
+					<div class="playConfigurationItemFlex" onclick="resetPlayCriteria()">
+						<label class="playConfigurationItemTitleFlexCenter">
+							<span>
+								<img class="playConfigurationResetImg"  src="imgstatic/Sw.svg" />
+							</span>
+							<span class="fr_lang">Réinitialiser</span>
+							<span class="en_lang">Reset to default</span>
+					</div>
+				</div>
+			</div>
 		</center>
 	</div>
 </div>
@@ -808,8 +1169,8 @@ loaderInterval=setInterval(updateLoadProgressBar, 100);
                             <li>Affiche tous les signes dont une des valeurs correspond au terme de recherche, ou tous les <b>groupes et ligatures</b> dont un des signes correspond au terme de recherche</li>
                             <li>Utiliser des virgules pour séparer plusieurs termes de recherche à des fins de comparaison. Par exemple, dans la colonne Gardiner, la valeur F31,F40 filtrera sur les graphèmes correspondants à F31, les graphèmes correspondants à F40, et tout groupe contenant l'un de ces deux graphèmes</li>
                             <li>Ce mode de recherche permet d'afficher aisément les groupes et ligatures contenant un ou plusieurs signe(s) donné(s).</li>
-                            <li>Pour les colonnes Gardiner ou Möller, le terme de recherche doit correspondre à un code existant - dans la colonne Gardiner, G n'affichera donc PAS les signes Gxx des oiseaux</li>			
-                            <li>Le comportement de cette recherche diffère un peu pour la colonne translitération: tous les signes ou groupes dont une translitération contient le terme de recherche seront affichées.</li>
+                            <li>Pour les colonnes Gardiner ou Möller, le terme de recherche doit correspondre à un code existant - dans la colonne Gardiner, G n'affichera donc PAS les signes Gxx des oiseaux</li>		
+							<li>Le comportement de cette recherche diffère un peu pour la colonne translitération: tous les signes ou groupes dont une translitération contient le terme de recherche seront affichées.</li>
 			</ul></div>
 			<div class="en_lang"><ul>
                             <li>Display all signs of which some value matches the search term, as well as <b>groups and ligatures</b> of which a sign matches the search term.</li>
@@ -890,12 +1251,12 @@ loaderInterval=setInterval(updateLoadProgressBar, 100);
 		</span>
 		<img src="imgstatic/pray.svg" onclick="hideOrShowSidebar('thanks',true)"/>
 	</div>
-	<div class="topButton" id="openDrillDiv">
+	<div class="topButton" id="openPlayDiv">
 		<span class="tooltiptext">
 			<div class="fr_lang">Exercices d'entraînement</div>
 			<div class="en_lang">Training exercises</div>
 		</span>
-		<img src="imgstatic/work.svg" onclick="hideOrShowSidebar('drill',true)"/>
+		<img src="imgstatic/work.svg" onclick="hideOrShowSidebar('play',true)"/>
 	</div>
 	<div class="topButton" id="openSettingsDiv">
 		<span class="tooltiptext">
@@ -940,6 +1301,11 @@ function isMatch(searchString,dataToCompare,nSearchType,nField) {
 	}
 	if (nSearchType==1) {
 		bFound=false;
+		if (nField=1) {
+			//makes everything upper case so that search is case-insensitive
+			for (k=0;k<dataToCompare.length;k++) {dataToCompare[k]=dataToCompare[k].toUpperCase();}
+			for (k=0;k<searchStrings.length;k++) {searchStrings[k]=searchStrings[k].toUpperCase();}
+		}
 		for (i=0;i<dataToCompare.length;i++) {
 			if (searchStrings.includes(dataToCompare[i])) {i=dataToCompare.length; bFound=true;}
 		}
@@ -954,7 +1320,16 @@ function isMatch(searchString,dataToCompare,nSearchType,nField) {
 						if (dataToCompare[i].includes(searchStrings[j])) {bFound=true; }
 					} else {
 						allPartsFound=true;parts=[];partsindata=[];
-						if (nField==1) {parts=searchStrings[j].split(" ");partsindata=dataToCompare[i].split(" ");} else if (nField==2) {parts=searchStrings[j].split("+"); partsindata=dataToCompare[i].split("+");};
+						if (nField==1) {
+							parts=searchStrings[j].split(" ");
+							partsindata=dataToCompare[i].split(" ");
+							//now makes everything upper case so that search is case-insensitive
+							for (k=0;k<parts.length;k++) {parts[k]=parts[k].toUpperCase()};
+							for (k=0;k<partsindata.length;k++) {partsindata[k]=partsindata[k].toUpperCase()};
+						} else if (nField==2) {
+							parts=searchStrings[j].split("+");
+							partsindata=dataToCompare[i].split("+");
+						}
 						for (k=0;k<parts.length;k++) {
 							if (!partsindata.includes(parts[k])) {allPartsFound=false;}
 						}
@@ -996,27 +1371,27 @@ $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
 		blResult=false;
 		if (nFilteringType==2)  {blResult=true};
 		if (searchGardi!="") {
-			bl=isMatch(searchGardi,[data[0]],nSearchType,1);
+			bl=isMatch(searchGardi,data[0].split(", "),nSearchType,1);
 			switch (nFilteringType) {
-				case 1: blResult=bl;
-				case 2: blResult=blResult && bl;
-				case 3: blResult=blResult || bl;
+				case 1: {blResult=bl; break;}
+				case 2: {blResult=blResult && bl; break;}
+				case 3: {blResult=blResult || bl; break;}
 			}
 		}
 		if (searchMöller!="") {
 			bl=isMatch(searchMöller, data[1].replace("=",",").split(","),nSearchType,2);	//Möller can be of the type 626,646=LXIII - we divide that into the array ["626","646","LXIII"]
 			switch (nFilteringType) {
-				case 1: blResult=bl;
-				case 2: blResult=blResult && bl;
-				case 3: blResult=blResult || bl;
+				case 1: {blResult=bl; break;}
+				case 2: {blResult=blResult && bl; break;}
+				case 3: {blResult=blResult || bl; break;}
 			}
 		}
 		if (searchMdc!="") {
 			bl=isMatch(searchMdc,data[12].split(","),nSearchType,3);
 			switch (nFilteringType) {
-				case 1: blResult=bl;
-				case 3: blResult=blResult || bl;
-				case 2: blResult=blResult && bl;
+				case 1: {blResult=bl; break;}
+				case 3: {blResult=blResult || bl; break;}
+				case 2: {blResult=blResult && bl; break;}
 			}
 		}
 		return blResult;
@@ -1027,28 +1402,37 @@ $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
 
 $('#maintable thead tr').clone(true).addClass('filters').appendTo('#maintable thead');
 
-//initialize ht, i.e. a key-value javascript object with elements of the form 'UAT28_S_10_9_7783_3372_163_220':'A2', ... i.e. keys are hieratogram ids, while values are gardiner/mdc codes
-//also initialize imageSources, i.e. e key-value javascript object with elements of the form 'UAT28_S_10_9_7783_3372_163_220':'img/UAT28_S_10_9_7783_3372_163_220.svg',
-//i.e. keys are hieratogram ids, while values are the corresponding imgSrc (which may be URLs - absolute or relative - or base64 inline)
+//initialize ht, i.e. a key-value javascript object with elements of the form 'UAT28_S_10_9_7783_3372_163_220':{'hiero':'A2','period':2,'texttype':'C01-LITT',img':'img/UAT28_S_10_9_7783_3372_163_220.svg'}
+//  ... i.e. keys are hieratogram ids, while values ia a key-value object that provides  metadata for the hieratogram
 var ht={};
 var imageSources={}
 allHierDiv=$('.hier');
 for (i=0;i<allHierDiv.length;i++) {
-	ht[allHierDiv[i].getAttribute("id")]=allHierDiv[i].parentNode.parentNode.getAttribute("id").substring(3)
+	obj = {'hiero': allHierDiv[i].parentNode.parentNode.getAttribute("id").substring(3)};
+	obj['texttype']=allHierDiv[i].classList[1];
+	obj['period']=allHierDiv[i].parentNode.cellIndex-5;		//parent is a <td> - its index is the column number, and period 0 is column 5
+	obj['tooltiptext']=allHierDiv[i].getElementsByTagName("span")[0].innerHTML;
 	sImg=$(allHierDiv[i]).children("img")[0].getAttribute("data-src");
 	if (sImg==null) {sImg=$(allHierDiv[i]).children("img")[0].getAttribute("src");}	//already lazy-loaded for some reason
-	imageSources[allHierDiv[i]["id"]]=sImg
+	obj["img"]=sImg;
+	ht[allHierDiv[i].getAttribute("id")]=obj;
 }
 var hg={};
-//initialize hg, i.e a key-value javascript object with elements of the form 'A1+N35': 'g5.svg', i.e. keys are gardiner/mdc codes and values are image filenames
+//initialize hg, i.e a key-value javascript object with elements of the form 'A1+N35': {'img': 'g5.svg', 'freq': 30000, 'lig': true, 'translit'='i+n'}
+//  i.e. keys are gardiner/mdc codes and values are key-value object that provides metadata for the hieroglyph (img frequency, image source, whether it's a ligature or not)
 allTableRows=$("#maintable tr");
 for (i=2;i<allTableRows.length;i++) {	//item 0 is table header, item 1 is filters
 	sMdc=allTableRows[i].getAttribute("id").substring(3);
-	sImg=$($(allTableRows[i]).children("td")[2]).children("img")[0].getAttribute("data-src");
-	if (sImg==null) {sImg=$($(allTableRows[i]).children("td")[2]).children("img")[0].getAttribute("src");}	//already lazy-loaded for some reason
-	hg[sMdc]=sImg.split("/")[1];
+	sImg=allTableRows[i].getElementsByTagName("td")[2].getElementsByTagName("img")[0].getAttribute("data-src");
+	if (sImg==null) {sImg=allTableRows[i].getElementsByTagName("td")[2].getElementsByTagName("img")[0].getAttribute("src");}	//already lazy-loaded for some reason
+	obj = {'img': sImg, 'freq': parseInt(allTableRows[i].getElementsByTagName("td")[4].innerHTML), 'lig': (allTableRows[i].getElementsByTagName("td")[13].innerHTML=="(lig)")}
+	obj['translit']=allTableRows[i].getElementsByTagName("td")[3].innerHTML;
+	obj['translitmdc']=allTableRows[i].getElementsByTagName("td")[12].innerHTML;
+	obj['allgardiner']=allTableRows[i].getElementsByTagName("td")[0].innerHTML;
+	hg[sMdc]=obj;
 }
-
+updatePlayConfig();
+updatePlayAreaDisplay();
 var datatable = $('#maintable').DataTable( {
     orderCellsTop: true,
     fixedHeader: true,

@@ -51,7 +51,7 @@ hieratBase64={}
 patternOnlyAlphanum = re.compile('[\W_]+')
 signsDict={}
 sSql="SELECT mdc, svgpath, if(singleMoellerCodes is null,'',singleMoellerCodes),if(groupMoellerCode is null, '',groupMoellerCode),id, " + \
-          " if(transliterations is null, '', transliterations), ramsesFrequency FROM signsAndGroups"
+          " if(transliterations is null, '', transliterations), ramsesFrequency, mdcAlternatives FROM signsAndGroups"
 c=hieradb.cursor()
 c.execute(sSql)
 for x in c.fetchall():
@@ -78,6 +78,8 @@ for x in c.fetchall():
     if mdconlyalphanum!=mdc:
         signsDict[mdc]['ligature']="lig"
     signsDict[mdc]["frequency"]=x[6]
+    if not(x[7] is None):
+        signsDict[mdc]["mdcAlternatives"]=x[7]
     if len(signsDict)%100==0:
         print("Loaded {} hieroglyphs".format(len(signsDict)))
 c.close()
@@ -171,8 +173,8 @@ def getOrderString(b):
 
 #on essaie de regrouper par signe Gardiner, et d'assigner aux différentes colonnes
 
-#les nouvelles colonnes seront
-column_headers = {
+#les titres des colonnes seront
+periods = {
     0: "18D",
     1: "18D <= Th III",
     2: "18D > Th III",
@@ -279,6 +281,20 @@ for cdk in categDescrip.keys():
     s2+=".checkboxfor"+cdk+bkg+"\n"
 sHtml=sHtml.replace("XXXTEXTREGISTRIESCSSXXX",s1+s2)
 
+#Form-input de choix de type de texte
+s=""
+for cdk in categDescrip.keys():
+    s+='<label><input type="checkbox" onchange="updatePlayConfig()" id="checkPlayConfigTextType'+cdk+'" checked>' + \
+            '<span class="fr_lang">'+categDescrip[cdk]["fr"]+'</span>'+\
+            '<span class="en_lang">'+categDescrip[cdk]["en"]+'</span></input></label>'
+sHtml=sHtml.replace("XXXPLAYCONFIGINPUTTEXTTYPESXXX",s)
+
+s=""
+for p in periods.keys():
+    s+='<label><input type="checkbox" onchange="updatePlayConfig()" id="checkPlayConfigPeriod'+str(p)+'" checked>' + \
+            periods[p]+'</input></label>'
+sHtml=sHtml.replace("XXXPLAYCONFIGPERIODSXXX",s)
+    
 #Checkboxes pour les types de textes, et initialisation de la variable javascript contenant les différents codes de types de textes
 s=""
 for c in sorted(set(dcat.values())):
@@ -292,8 +308,8 @@ sTableContent+='<th>Möller</th>'
 sTableContent+='<th>Hieroglyphe</th>'
 sTableContent+='<th>Translit</th>'
 sTableContent+='<th><center>n (Rams)</center></th>'
-for ch in column_headers:
- sTableContent+="<th><center>"+column_headers[ch]+"</center></th>"
+for ch in periods:
+ sTableContent+="<th><center>"+periods[ch]+"</center></th>"
 sTableContent+="<th>order</th>"
 sTableContent+="<th>translit mdc</th>"
 sTableContent+="<th>is ligat</th>"
@@ -311,7 +327,10 @@ for gardikey in signsDict:
      sDestPath=os.path.join(csvExtractImgFolder,b["hierog"])
      shutil.copy(sSourcePath,sDestPath)
  sCurItem2="<tr id='HHH"+b["gardi"]+"'>\r"
- sCurItem2+="<td>"+b["gardi"].replace("+"," ").replace("-"," ").replace(":"," ")+"</td>\r"
+ sCurItem2+="<td>"+b["gardi"].replace("+"," ").replace("-"," ").replace(":"," ")
+ if "mdcAlternatives" in b:
+     sCurItem2+=", "+b["mdcAlternatives"].replace(",",", ")
+ sCurItem2+="</td>\r"
  sCurItem2+="<td>"
  if 'N Möller' in b:
     sCurItem2+=b['N Möller']
