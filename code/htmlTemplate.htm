@@ -124,10 +124,12 @@ img {
   border: 1px solid;
   text-align: center;
   padding: 10px;
+  font-size: 24;
 }
 
 
 .exercisesTable th {
+  border: 1px solid;
   padding-top: 12px;
   padding-bottom: 12px;
   text-align: center;
@@ -472,6 +474,7 @@ const nPeriodColumns=6;	//from 0 to nPeriodColumns-1
 const lazyLoadMethod="XXXLAZYLOADMETHODXXX";
 var gameStatus = 1;
 var currentLanguage='';
+var loaderInterval;
 if (lazyLoadMethod=="OBSERVER") {
 	document.addEventListener("DOMContentLoaded", function() {
 		doLazyLoad()
@@ -576,7 +579,7 @@ function computeURL() {
 
 function switchLanguage(activeLang) {
 	//console.log("Switching to "  + activeLang);
-	otherLang=(activeLang=="fr")?"en":"fr";
+	var otherLang=(activeLang=="fr")?"en":"fr";
     $("."+activeLang+"_lang").addClass("active-lang"); 
     $("."+otherLang+"_lang").removeClass("active-lang");
     $("#lang-switch ."+activeLang).addClass("active-flag");
@@ -586,7 +589,7 @@ function switchLanguage(activeLang) {
 }
 
 document.onreadystatechange = function() {
-	document.getElementById("loading_container").style.display=(document.readyState == "complete")?"none":"block";	
+	if (document.readyState=="complete") document.getElementById("loading_container").style.display="none";	
 	document.getElementById("main").style.display=(document.readyState == "complete")?"block":"none";
     document.getElementById("playarea").style.visibility=(document.readyState == "complete")?"visible":"hidden";
 	document.getElementById("urlarea").style.visibility=(document.readyState == "complete")?"visible":"hidden";
@@ -628,9 +631,9 @@ function applyPageParams(params) {
 	if (includeLigs=="0") { $("#check_includeLigatures")[0].checked=false }
 
 	if ((searchType!="exact") && (searchType!="contains") && (searchType!="regex")) {searchType="exact"};
-	arr=["exact","contains","regex"];
+	var arr=["exact","contains","regex"];
 	$("#check_match"+searchType)[0].checked=true;		
-	for (i=0;i<arr.length;i++) {
+	for (var i=0;i<arr.length;i++) {
 			if (arr[i]!=searchType) { 
 					$("#check_match"+arr[i])[0].checked=false; 
 			}
@@ -638,9 +641,9 @@ function applyPageParams(params) {
 
 	if ((filteringType!="exclusive") && (filteringType!="and") && (filteringType!="or")) {filteringType="or"};
 	filteringType=filteringType.toUpperCase();
-	arr=["EXCLUSIVE","OR","AND"];
+	var arr=["EXCLUSIVE","OR","AND"];
 	$("#check_filters"+filteringType)[0].checked=true;		
-	for (i=0;i<arr.length;i++) {
+	for (var i=0;i<arr.length;i++) {
 			if (arr[i]!=filteringType) { 
 					$("#check_filters"+arr[i])[0].checked=false; 
 			}
@@ -657,6 +660,13 @@ function applyPageParams(params) {
 
 function emptyAll() {
 	applyPageParams({"gardi":"","moeller":"","mdc":"","t":"exact","filteringType":"or","includeLigs":"1","minfreq":"100","onlyfreq":"0","lang":"fr"});
+	var categs=sCategClasses.split("/");
+	for (var i=0;i<categs.length;i++) {
+		document.getElementById("check_cat"+categs[i]).checked=true;
+	}
+	changeCategClassVisibilities();
+	document.getElementById("check_nocolor").checked=false;
+	changeNoColor();
 }
 
 function changeNoColor() {
@@ -664,8 +674,8 @@ function changeNoColor() {
 }
 
 function changeCategClassVisibilities() {
-    arrCategs=sCategClasses.split("/");
-    for (kk=0 ; kk<arrCategs.length ; kk++) {
+    var arrCategs=sCategClasses.split("/");
+    for (var kk=0 ; kk<arrCategs.length ; kk++) {
         blIsCurClassChecked = $("#check_cat"+arrCategs[kk])[0].checked;
 
         toggleClassVisibility(arrCategs[kk],blIsCurClassChecked);
@@ -674,7 +684,7 @@ function changeCategClassVisibilities() {
 }
 
 function getUsualColorForTextCategory(sClassName) {
- console.log("Trying to find color for " + sClassName);
+// console.log("Trying to find color for " + sClassName);
  for (var ii=2;ii<document.styleSheets.length;ii++) {
   for (var jj=0;jj<document.styleSheets[ii].cssRules.length;jj++) {
    if (document.styleSheets[ii].cssRules[jj].cssText.startsWith(".checkboxfor"+sClassName)) {
@@ -687,15 +697,15 @@ function getUsualColorForTextCategory(sClassName) {
 function toggleHieratogramsTransparency(blTransparent) {
  var arrCategs=sCategClasses.split("/");
  for (var kkk=0;kkk<arrCategs.length;kkk++) {
-    sClassName=arrCategs[kkk];
+    var sClassName=arrCategs[kkk];
     for (var i=2;i<document.styleSheets.length;i++) {
       for (var j=0;j<document.styleSheets[i].cssRules.length;j++) {
        if (document.styleSheets[i].cssRules[j].cssText.startsWith("."+sClassName)) {
          if (blTransparent) {
             document.styleSheets[i].cssRules[j].style.setProperty("background-color","transparent");
          } else {
-            sColor=getUsualColorForTextCategory(sClassName);
-            console.log("Usual color for " + sClassName + " is " + sColor);
+            var sColor=getUsualColorForTextCategory(sClassName);
+            //console.log("Usual color for " + sClassName + " is " + sColor);
             document.styleSheets[i].cssRules[j].style.setProperty("background-color",sColor);
          }
        }
@@ -706,10 +716,10 @@ function toggleHieratogramsTransparency(blTransparent) {
 
 
 function toggleClassVisibility(sClassName,blVisible) {
- for (i=2;i<document.styleSheets.length;i++) {
-  for (j=0;j<document.styleSheets[i].cssRules.length;j++) {
+ for (var i=2;i<document.styleSheets.length;i++) {
+  for (var j=0;j<document.styleSheets[i].cssRules.length;j++) {
    if (document.styleSheets[i].cssRules[j].cssText.startsWith("."+sClassName)) {
-      s="";
+      var s="";
       if (blVisible) {s=500; d="inline-block";} else {s=0; d="none";}
       document.styleSheets[i].cssRules[j].style.setProperty("display",d);
       document.styleSheets[i].cssRules[j].style.setProperty("max-height",s);
@@ -729,13 +739,13 @@ function datatablesRowCallbackFunction( row, aData, iDisplayIndex ) {
 			//sGardi=row.getAttribute("id").substring(3);
 			//imgSrc = "img/"+hg[sGardi];
 			var img=$('td:eq(2) > img', row)[0];
-			imgSrc=img.getAttribute("data-src");
+			var imgSrc=img.getAttribute("data-src");
 			img.setAttribute("src",imgSrc);
 			img.classList.remove("lazy");
 			img.removeAttribute("data-src");
-			hi=row.getElementsByClassName("hier");
+			var hi=row.getElementsByClassName("hier");
 			for (i=0;i<hi.length;i++) {
-			  hie=hi[i];
+			  var hie=hi[i];
 			  //id=hie.getAttribute("id");
 			  //imgSrc="img/h"+id+".svg";
 			  var img= hie.getElementsByTagName("img")[0];
@@ -751,31 +761,32 @@ function datatablesRowCallbackFunction( row, aData, iDisplayIndex ) {
 };
 
 function resetPlayCriteria() {
-	categClasses = sCategClasses.split("/");
-	for (i=0;i<categClasses.length;i++) {
+	var categClasses = sCategClasses.split("/");
+	for (var i=0;i<categClasses.length;i++) {
 		document.getElementById("checkPlayConfigTextType"+categClasses[i]).checked=true;
 	}
-	for (i=0;i<nPeriodColumns;i++) {
+	for (var i=0;i<nPeriodColumns;i++) {
 		document.getElementById("checkPlayConfigPeriod"+i).checked=true;
 	}
 	document.getElementById("radioPlayConfigFrequencyAll").checked=true;
 	document.getElementById("checkPlayConfigIncludeLig").checked=true;
+	var e;
 	e=document.getElementById("numPlayConfigHieraPerSign");e.value=e.getAttribute("defvalue");
 	e=document.getElementById("numPlayExercises");e.value=e.getAttribute("defvalue");
 	updatePlayConfig();
 }
 
-var signsSuitableForGame=[];
+var signsSuitableForGame=[];	//global variable
 
 function computeSignsSuitableForGame() {
-  acceptableTextTypes=[];
-  categClasses = sCategClasses.split("/");
-  for (i=0;i<categClasses.length;i++) {
+  var acceptableTextTypes=[];
+  var categClasses = sCategClasses.split("/");
+  for (var i=0;i<categClasses.length;i++) {
 	if (document.getElementById("checkPlayConfigTextType"+categClasses[i]).checked) acceptableTextTypes.push(categClasses[i]);
   }  
   if (acceptableTextTypes.includes("C99-OTH")) acceptableTextTypes.push("C98-UNK");		//"other" is a special category
-  acceptablePeriods = [];
-  for (i=0;i<nPeriodColumns;i++) {
+  var acceptablePeriods = [];
+  for (var i=0;i<nPeriodColumns;i++) {
 	if (document.getElementById("checkPlayConfigPeriod"+i).checked) acceptablePeriods.push(i);
   }
   suitableHieratogramIds=[];
@@ -784,14 +795,14 @@ function computeSignsSuitableForGame() {
 		suitableHieratogramIds.push(hm);
 	}
   }
-  hgwithht={};		//object of hieroglyphs with suitable hieratograms assigned to each
+  var hgwithht={};		//object of hieroglyphs with suitable hieratograms assigned to each
   for (const h in hg) {
 	obj=hg[h];
 	obj["hts"]=[];
 	hgwithht[h]=obj;
   }
-  for (i=0;i<suitableHieratogramIds.length;i++) {
-    hi = suitableHieratogramIds[i];
+  for (var i=0;i<suitableHieratogramIds.length;i++) {
+    var hi = suitableHieratogramIds[i];
 	hgwithht[ht[hi]["hiero"]]["hts"].push(hi);
   }
   
@@ -801,7 +812,7 @@ function computeSignsSuitableForGame() {
   for (const h in hgwithht) {
 	if (!(!document.getElementById("checkPlayConfigIncludeLig").checked && hgwithht[h]["lig"]==true)) {	//sign is unsuitable if we don't include ligatures but h is a ligature
 		if (parseInt(document.getElementById("numPlayConfigHieraPerSign").value)<=hgwithht[h]["hts"].length) {
-			obj=hgwithht[h];
+			var obj=hgwithht[h];
 			obj["id"]=h;
 			signsSuitableForGame.push(hgwithht[h]);
 		}
@@ -810,7 +821,7 @@ function computeSignsSuitableForGame() {
   
  //now we sort the acceptable signs by decreasing frequency and cut off if necessary
  signsSuitableForGame=signsSuitableForGame.sort((a,b)=>b["freq"]-a["freq"]);
- nCutOff=-1;
+ var nCutOff=-1;
  if (document.getElementById("radioPlayConfigFrequencyTop50").checked) nCutOff=50;
  if (document.getElementById("radioPlayConfigFrequencyTop100").checked) nCutOff=100;
  if (document.getElementById("radioPlayConfigFrequencyTop200").checked) nCutOff=200;
@@ -826,22 +837,22 @@ function updatePlayConfig() {
 
 function updatePlayAreaDisplay() {
 	//make parts of the display visible or not according to gameStatus
-	listElements=["buttonGameConfigure","buttonGameGenerate","buttonGameShowAnswers","playConfiguration","game","gameScore"]
-	visibleElements=[];
+	var listElements=["buttonGameConfigure","buttonGameGenerate","buttonGameShowAnswers","playConfiguration","game","gameScore"]
+	var visibleElements=[];
 	switch (gameStatus) {
 		case 1: {visibleElements=["buttonGameGenerate","playConfiguration"]; break;}
 		case 2: {visibleElements=["buttonGameConfigure","buttonGameShowAnswers","game","gameScore"]; break;}
 		case 3: {visibleElements=["buttonGameConfigure","buttonGameGenerate","game","gameScore"]; break;}
 	}
-	for (i=0;i<listElements.length;i++) {
-		invisibleElementsThatTakeUpSpace=["buttonGameGenerate","buttonGameConfigure","buttonGameShowAnswers"];
-		x=listElements[i];
+	for (var i=0;i<listElements.length;i++) {
+		const invisibleElementsThatTakeUpSpace=["buttonGameGenerate","buttonGameConfigure","buttonGameShowAnswers"];
+		var x=listElements[i];
 		if (document.getElementById(x)!=null) {		//some elements - like game - are created dynamically
 			if (invisibleElementsThatTakeUpSpace.includes(x)) {
-				h=""; if (!visibleElements.includes(x)) h="hidden";	//this element is not among the visible ones
+				var h=""; if (!visibleElements.includes(x)) h="hidden";	//this element is not among the visible ones
 				document.getElementById(x).style.visibility=h; 
 			} else {
-				d=""; if (!visibleElements.includes(x)) d="none";
+				var d=""; if (!visibleElements.includes(x)) d="none";
 				document.getElementById(x).style.display=d;
 			}
 		}
@@ -863,13 +874,13 @@ function gameGenerate () {
 	var oldscore=document.getElementById("gameScore");
 	if (oldscore!=null) oldscore.remove();
 	
-	divplay=document.createElement("div");
+	var divplay=document.createElement("div");
 	divplay.setAttribute("id","game");
-	tb=document.createElement("table");
+	var tb=document.createElement("table");
 	tb.setAttribute("class","exercisesTable");
 	tb.setAttribute("id","gameTable");
-	trow = document.createElement("tr");
-	th=document.createElement("th");
+	var trow = document.createElement("tr");
+	var th=document.createElement("th");
 	th.innerHTML="#";
 	trow.appendChild(th);
 	th = document.createElement("th");
@@ -881,31 +892,31 @@ function gameGenerate () {
 	tb.appendChild(trow);
 	
 		
-	nExercises=parseInt(document.getElementById("numPlayExercises").value)
+	var nExercises=parseInt(document.getElementById("numPlayExercises").value)
 	for (var i=0; i<nExercises; i++) {
-		indexChosen = Math.floor(Math.random() * signsSuitableForGame.length);
-		curSign=signsSuitableForGame[indexChosen];
+		var indexChosen = Math.floor(Math.random() * signsSuitableForGame.length);
+		var curSign=signsSuitableForGame[indexChosen];
 		signsSuitableForGame.splice(indexChosen,1);
 		trow = document.createElement("tr");
 		trow.setAttribute("sign",curSign["id"]);
-		td=document.createElement("td");
+		var td=document.createElement("td");
 		td.innerHTML=(i+1);
 		trow.appendChild(td);
 		td=document.createElement("td");
 		//chose hieratograms for this sign
-		nHierat=parseInt(document.getElementById("numPlayConfigHieraPerSign").value);
+		var nHierat=parseInt(document.getElementById("numPlayConfigHieraPerSign").value);
 		for (var j=0;j<nHierat;j++) {
-			k = Math.floor(Math.random() * curSign["hts"].length);
-			curHierat=curSign["hts"][k];
+			var k = Math.floor(Math.random() * curSign["hts"].length);
+			var curHierat=curSign["hts"][k];
 			curSign["hts"].splice(k,1);
-			tdiv=document.createElement("div");
+			var tdiv=document.createElement("div");
 			tdiv.setAttribute("class","hier");
 			tdiv.classList.add(ht[curHierat]["texttype"]);
-			tspan=document.createElement("span");
+			var tspan=document.createElement("span");
 			tspan.setAttribute("class","tooltiptext");
 			tspan.innerHTML=ht[curHierat]["tooltiptext"]
 			tdiv.appendChild(tspan);
-			timg=document.createElement("img");
+			var timg=document.createElement("img");
 			timg.setAttribute("src",ht[curHierat]["img"]);
 			tdiv.appendChild(timg);
 			td.appendChild(tdiv);
@@ -929,29 +940,30 @@ function gameGenerate () {
 function gameShowAnswers () {
 	gameStatus = 3;
 	//first we add the columns
-	tb = document.getElementById("gameTable");
+	var tb = document.getElementById("gameTable");
 	if (tb==null) return;
-	rows=tb.getElementsByTagName("tr");
+	var rows=tb.getElementsByTagName("tr");
 	console.log("At the start")
-	for (i=0;i<rows.length;i++) {
+	var tr;
+	for (var i=0;i<rows.length;i++) {
 		tr=rows[i];
 		if (i==0) {	//headers
 			for (j=0;j<3;j++) {
-				th=document.createElement("th");
+				var th=document.createElement("th");
 				th.innerHTML=["Hierog","Gardiner","Translit"][j];
 				tr.appendChild(th);
 			}
 		} else {	//data
-			mdc=tr.getAttribute("sign");
-			td=document.createElement("td");
-			timg=document.createElement("img");
+			var mdc=tr.getAttribute("sign");
+			var td=document.createElement("td");
+			var timg=document.createElement("img");
 			timg.setAttribute("src",hg[mdc]["img"]);
 			timg.setAttribute("height","50");
 			timg.setAttribute("width","50");
 			td.appendChild(timg);
 			tr.appendChild(td);
 			td=document.createElement("td");
-			ttext=document.createTextNode(hg[mdc]["id"]);
+			var ttext=document.createTextNode(hg[mdc]["id"]);
 			td.appendChild(ttext);
 			tr.appendChild(td);
 			td=document.createElement("td");
@@ -961,27 +973,28 @@ function gameShowAnswers () {
 		}
 	}
 	//now, let's correct the answers given
-	scoreDenominator = rows.length-1;
-	score=0
+	var scoreDenominator = rows.length-1;
+	var score=0
 	for (var ii=1;ii<rows.length;ii++) {
 		tr=rows[ii];
-		mdc=tr.getAttribute("sign");
-		studentInput=tr.getElementsByTagName("td")[2].getElementsByTagName("input")[0];
+		var mdc=tr.getAttribute("sign");
+		var studentInput=tr.getElementsByTagName("td")[2].getElementsByTagName("input")[0];
 		studentInput.style.backgroundColor="white";
-		studentAnswer=studentInput.value;
-		isCorrect=false;
+		studentInput.readOnly=true;
+		var studentAnswer=studentInput.value;
+		var isCorrect=false;
 		if (studentAnswer!="") {
-			console.log("Checking if " + studentAnswer + " matches " + mdc);
+			//console.log("Checking if " + studentAnswer + " matches " + mdc);
 			isCorrect=(isMatch(studentAnswer,hg[mdc]["allgardiner"].split(", "),1,1) || isMatch(studentAnswer,hg[mdc]["translitmdc"].split(","),1,3));
 		}
-		newColor = (isCorrect ? "#04AA6D" : "red")
+		var newColor = (isCorrect ? "#04AA6D" : "red")
 		tr.getElementsByTagName("td")[2].style.backgroundColor=newColor;
 		if (!isCorrect) {studentInput.style.textDecoration="line-through";}
 		if (isCorrect) {score+=1}
 	}
-	pa=document.getElementById("playarea");
-	tdiv=document.createElement("div");
-	g=document.getElementById("game");
+	var pa=document.getElementById("playarea");
+	var tdiv=document.createElement("div");
+	var g=document.getElementById("game");
 	tdiv.setAttribute("id","gameScore");
 	tdiv.innerHTML=score+" / "+scoreDenominator;
 	pa.insertBefore(tdiv,g);
@@ -992,9 +1005,6 @@ function gameShowAnswers () {
 function onExerciseInputChange (){
 	this.style.backgroundColor=(this.value=="" ? "yellow" : "transparent");	//'inline if', meaning background is yellow if input is empty
 }
-
-
-
 
 </script>
 <body>
@@ -1079,21 +1089,22 @@ function onExerciseInputChange (){
 
 //le chargement peut être mesuré de la façon suivante: d'abord la taille du innerHTML augmente jusqu'à environ 4.5 MB, puis les datatables interviennent et on retombe à 600K environ (passage de <table> à datatable)
 // on va donc considérer que la partie initiale d'augmentation de la taille représente 0-80%, puisque quand ça diminue, on a atteint les 90% (les 10 derniers pourcents servant au rendu visuel)
-maxReached=0;
+var maxReached=0;	//global variable
+var nPercentLoaded;	//global
 function updateLoadProgressBar() {
-	nMax=XXXMAXSIZEXXX;
-	curSize =document.documentElement.innerHTML.length;
+	const nMax=XXXMAXSIZEXXX;
+	var curSize =document.documentElement.innerHTML.length;
 	console.log(curSize);
-	if (curSize<maxReached*0.9) {nPercent=90;}	//ceci signifie que la taille a significativement diminué -> on a déjà processé une partie des datatables
-	else if (curSize>maxReached) {maxReached=curSize; nPercent=Math.min(maxReached/nMax*80,80);};
-    if (nPercent < 0) { nPercent = 0;}
-    if (nPercent > 100) { nPercent = 100;}
-	document.getElementById("loading_text").innerHTML="NKHP loading " + parseFloat(nPercent).toFixed(0)+"%";
+	if (curSize<maxReached*0.9) {nPercentLoaded=90;}	//ceci signifie que la taille a significativement diminué -> on a déjà processé une partie des datatables
+	else if (curSize>maxReached) {maxReached=curSize; nPercentLoaded=Math.min(maxReached/nMax*80,80);};
+    if (nPercentLoaded < 0) { nPercentLoaded = 0;}
+    if (nPercentLoaded > 100) { nPercentLoaded = 100;}
+	document.getElementById("loading_text").innerHTML="NKHP loading " + parseFloat(nPercentLoaded).toFixed(0)+"%";
 	var circle = document.querySelector("#loading_circle")
     var r = circle.getAttribute('r');
     var c = Math.PI*(r*2);
 	var circumference = 2 * Math.PI * r;
-	var strokeDasharray = (nPercent /100) * circumference;
+	var strokeDasharray = (nPercentLoaded /100) * circumference;
     circle.setAttribute('stroke-dasharray', [
       strokeDasharray,
       circumference - strokeDasharray
@@ -1107,12 +1118,12 @@ loaderInterval=setInterval(updateLoadProgressBar, 100);
 <b>NKHP (New Kingdom Hieratic Paleographies)</b>
 <div class="fr_lang"><ul class="thanks">
 	<li>NKHP est un outil d'apprentissage du hiératique du Nouvel Empire et du début de la TPI, développé par <a href="mailto:philippe.hennebert@student.uliege.be">Philippe <font style="font-variant: small-caps">Hennebert</font></a>, étudiant à l'Université de Liège, sous la supervision de <a class="thanks" href="https://www.uliege.be/cms/c_9054334/fr/repertoire?uid=u192490">Stéphane <font style="font-variant: small-caps">Polis</font></a>.</li>
-	<li>Cet outil permet d'explorer de façon dynamique les paléographies de Georg <font style="font-variant: small-caps">Möller</font> (vol. II) et de Stefan <font style="font-variant: small-caps">Wimmer</font>, notamment via des filtres et recherches complexes, permettant notamment des comparaisons</li>
+	<li>Cet outil permet d'explorer de façon dynamique un certain nombre de paléographies (dans la version actuelle, celles de Georg <font style="font-variant: small-caps">Möller</font> (vol. II) et de Stefan <font style="font-variant: small-caps">Wimmer</font>), notamment via des filtres et recherches complexes, permettant notamment des comparaisons</li>
 	<li>Un module d'entraînement à la reconnaissance de graphèmes est également accessible à l'étudiant (génération aléatoire de listes de graphèmes à identifier).</li>
 </ul></div>
 <div class="en_lang"><ul class="thanks">
 	<li>NKHP is a learning tool for New Kingdom (and early TIP) hieratic, déveloped by <a href="mailto:philippe.hennebert@student.uliege.be">Philippe <font style="font-variant: small-caps">Hennebert</font></a>, student at Liège University, under the supervision of <a class="thanks" href="https://www.uliege.be/cms/c_9054334/fr/repertoire?uid=u192490">Stéphane <font style="font-variant: small-caps">Polis</font></a>.</li>
-	<li>This tool aims at exploring dynamically Georg <font style="font-variant: small-caps">Möller</font>'s and Stefan <font style="font-variant: small-caps">Wimmer</font>'s paleographies, through filters and complex searches allowing for sign comparisons.</li>
+	<li>This tool aims at exploring dynamically certain NK paleographies - i.e. in this first version those by Georg <font style="font-variant: small-caps">Möller</font> and Stefan <font style="font-variant: small-caps">Wimmer</font> - through filters and complex searches allowing for sign comparisons.</li>
 	<li>A training module for grapheme recognition is also available to interested students, randomly generating graphemes lists.</li>
 </ul></div>
 
@@ -1273,7 +1284,7 @@ XXXTDFORTEXTCATEGXXX
 <td class='checkforfornocolor'><input type='checkbox' onchange='changeNoColor()' id='check_nocolor'><span class='fr_lang'>Censurer les couleurs</span><span class='en_lang'>Censor colors</span></td></tr></tbody></table>
 <script>
 //--STARTSCRIPTFORTEXTCATEGCLASSES--
-XXXSCRIPTFORTEXTCATEGCLASSESXXX
+XXXSCRIPTFORTEXTCATEGCLASSESXXX	//declaration of global variable sCategClasses (generated by python script)
 //--ENDSCRIPTFORTEXTCATEGCLASSES--
 </script>
 <table id="maintable" border="1">
@@ -1291,46 +1302,47 @@ function isMatch(searchString,dataToCompare,nSearchType,nField) {
 	//dataToCompare is an array of values (for instance ["wrd","Hms"] with which searchString will be compared)
 	//nSearchType=1 for exact, 2 for contains, 3 for regex
 	//nField=1 for gardiner, 2 for Möller, 3 for transliteration
-	searchStrings=searchString.split(",");
+	var searchStrings=searchString.split(",");
 	if ((nSearchType==1) || (nSearchType==2)) { 
-		for (i=0;i<searchStrings.length;i++) {
+		for (var i=0;i<searchStrings.length;i++) {
 			if (nField==1) {searchStrings[i]=searchStrings[i].replace(/[\W_]+/g," ").trim();};
 			if (nField==2) {searchStrings[i]=searchStrings[i].replace(/[\W_]+/g,"+").trim();};
 			if (nField==3) {searchStrings[i]=searchStrings[i].trim();};
 		}
 	}
+	var bFound;
 	if (nSearchType==1) {
 		bFound=false;
 		if (nField=1) {
 			//makes everything upper case so that search is case-insensitive
-			for (k=0;k<dataToCompare.length;k++) {dataToCompare[k]=dataToCompare[k].toUpperCase();}
-			for (k=0;k<searchStrings.length;k++) {searchStrings[k]=searchStrings[k].toUpperCase();}
+			for (var k=0;k<dataToCompare.length;k++) {dataToCompare[k]=dataToCompare[k].toUpperCase();}
+			for (var k=0;k<searchStrings.length;k++) {searchStrings[k]=searchStrings[k].toUpperCase();}
 		}
-		for (i=0;i<dataToCompare.length;i++) {
+		for (var i=0;i<dataToCompare.length;i++) {
 			if (searchStrings.includes(dataToCompare[i])) {i=dataToCompare.length; bFound=true;}
 		}
 		return bFound;
 	} else if (nSearchType==2) {
 		bFound=false;
-		for (i=0;i<dataToCompare.length;i++) {
-			for (j=0;j<searchStrings.length;j++) {
+		for (var i=0;i<dataToCompare.length;i++) {
+			for (var j=0;j<searchStrings.length;j++) {
 				if ((dataToCompare[i]!="") && (searchStrings[j]!="")) {
 					//now check if all "parts" of searchStrings[j] are in dataToCompare[i] - for transliteration, it's just string inclusion
 					if (nField==3) {
 						if (dataToCompare[i].includes(searchStrings[j])) {bFound=true; }
 					} else {
-						allPartsFound=true;parts=[];partsindata=[];
+						var allPartsFound=true;parts=[];partsindata=[];
 						if (nField==1) {
-							parts=searchStrings[j].split(" ");
-							partsindata=dataToCompare[i].split(" ");
+							var parts=searchStrings[j].split(" ");
+							var partsindata=dataToCompare[i].split(" ");
 							//now makes everything upper case so that search is case-insensitive
-							for (k=0;k<parts.length;k++) {parts[k]=parts[k].toUpperCase()};
-							for (k=0;k<partsindata.length;k++) {partsindata[k]=partsindata[k].toUpperCase()};
+							for (var k=0;k<parts.length;k++) {parts[k]=parts[k].toUpperCase()};
+							for (var k=0;k<partsindata.length;k++) {partsindata[k]=partsindata[k].toUpperCase()};
 						} else if (nField==2) {
-							parts=searchStrings[j].split("+");
-							partsindata=dataToCompare[i].split("+");
+							var parts=searchStrings[j].split("+");
+							var partsindata=dataToCompare[i].split("+");
 						}
-						for (k=0;k<parts.length;k++) {
+						for (var k=0;k<parts.length;k++) {
 							if (!partsindata.includes(parts[k])) {allPartsFound=false;}
 						}
 						if (allPartsFound) {bFound=true;}
@@ -1341,22 +1353,23 @@ function isMatch(searchString,dataToCompare,nSearchType,nField) {
 		return bFound;
 	} else if (nSearchType==3) {
 		bFound=false;
-		re=new RegExp(searchString);
-		for (i=0;i<dataToCompare.length;i++) {
+		var re=new RegExp(searchString);
+		for (var i=0;i<dataToCompare.length;i++) {
 			if (re.test(dataToCompare[i])) {i=dataToCompare.length; bFound=true;}
 		}
 		return bFound;
 	}
 }
+
 $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
     var min = parseInt($("#minFrequent").val(),10);
     var isLigat=(data[13]=="(lig)");
     var nRamses = parseFloat(data[4]) || 0; 
     var blOnlyFrequent = $("#check_onlyfrequent")[0].checked;
     var blIncludeLigatures = $("#check_includeLigatures")[0].checked;
-    nSearchType=0; // 1=exact, 2=contains, 3 = regex
+    var nSearchType=0; // 1=exact, 2=contains, 3 = regex
     if ($("#check_matchexact")[0].checked) {nSearchType=1;}	else if ($("#check_matchcontains")[0].checked) {nSearchType=2;}	else if ($("#check_matchregex")[0].checked) {nSearchType=3;}
-	nFilteringType=0	// 1 = exclusive, 2 = AND, 3 = OR
+	var nFilteringType=0	// 1 = exclusive, 2 = AND, 3 = OR
 	if ($("#check_filtersEXCLUSIVE")[0].checked) {nFilteringType=1;} else if ($("#check_filtersAND")[0].checked) {nFilteringType=2;} else if ($("#check_filtersOR")[0].checked) {nFilteringType=3;}
     var searchGardi=$("#searchGardi").val();
     var searchMöller=$("#searchMöller").val();
@@ -1368,7 +1381,8 @@ $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
     if (blOnlyFrequent && (min>nRamses)) {return false;}
     if (isLigat && (!blIncludeLigatures)) {return false;}
 	if ((searchGardi!="") || (searchMöller!="") || (searchMdc!="")) {
-		blResult=false;
+		var blResult=false;
+		var bl;
 		if (nFilteringType==2)  {blResult=true};
 		if (searchGardi!="") {
 			bl=isMatch(searchGardi,data[0].split(", "),nSearchType,1);
@@ -1404,33 +1418,41 @@ $('#maintable thead tr').clone(true).addClass('filters').appendTo('#maintable th
 
 //initialize ht, i.e. a key-value javascript object with elements of the form 'UAT28_S_10_9_7783_3372_163_220':{'hiero':'A2','period':2,'texttype':'C01-LITT',img':'img/UAT28_S_10_9_7783_3372_163_220.svg'}
 //  ... i.e. keys are hieratogram ids, while values ia a key-value object that provides  metadata for the hieratogram
-var ht={};
-var imageSources={}
-allHierDiv=$('.hier');
-for (i=0;i<allHierDiv.length;i++) {
-	obj = {'hiero': allHierDiv[i].parentNode.parentNode.getAttribute("id").substring(3)};
-	obj['texttype']=allHierDiv[i].classList[1];
-	obj['period']=allHierDiv[i].parentNode.cellIndex-5;		//parent is a <td> - its index is the column number, and period 0 is column 5
-	obj['tooltiptext']=allHierDiv[i].getElementsByTagName("span")[0].innerHTML;
-	sImg=$(allHierDiv[i]).children("img")[0].getAttribute("data-src");
-	if (sImg==null) {sImg=$(allHierDiv[i]).children("img")[0].getAttribute("src");}	//already lazy-loaded for some reason
-	obj["img"]=sImg;
-	ht[allHierDiv[i].getAttribute("id")]=obj;
+var ht=computeHt();
+function computeHt() {
+	var allHierDiv=$('.hier');		//global variable
+	var localHt={};
+	for (var i=0;i<allHierDiv.length;i++) {
+		var obj = {'hiero': allHierDiv[i].parentNode.parentNode.getAttribute("id").substring(3)};
+		obj['texttype']=allHierDiv[i].classList[1];
+		obj['period']=allHierDiv[i].parentNode.cellIndex-5;		//parent is a <td> - its index is the column number, and period 0 is column 5
+		obj['tooltiptext']=allHierDiv[i].getElementsByTagName("span")[0].innerHTML;
+		var sImg=$(allHierDiv[i]).children("img")[0].getAttribute("data-src");
+		if (sImg==null) {sImg=$(allHierDiv[i]).children("img")[0].getAttribute("src");}	//already lazy-loaded for some reason
+		obj["img"]=sImg;
+		localHt[allHierDiv[i].getAttribute("id")]=obj;
+	}
+	return localHt;
 }
-var hg={};
+var hg=computeHg();
 //initialize hg, i.e a key-value javascript object with elements of the form 'A1+N35': {'img': 'g5.svg', 'freq': 30000, 'lig': true, 'translit'='i+n'}
 //  i.e. keys are gardiner/mdc codes and values are key-value object that provides metadata for the hieroglyph (img frequency, image source, whether it's a ligature or not)
-allTableRows=$("#maintable tr");
-for (i=2;i<allTableRows.length;i++) {	//item 0 is table header, item 1 is filters
-	sMdc=allTableRows[i].getAttribute("id").substring(3);
-	sImg=allTableRows[i].getElementsByTagName("td")[2].getElementsByTagName("img")[0].getAttribute("data-src");
-	if (sImg==null) {sImg=allTableRows[i].getElementsByTagName("td")[2].getElementsByTagName("img")[0].getAttribute("src");}	//already lazy-loaded for some reason
-	obj = {'img': sImg, 'freq': parseInt(allTableRows[i].getElementsByTagName("td")[4].innerHTML), 'lig': (allTableRows[i].getElementsByTagName("td")[13].innerHTML=="(lig)")}
-	obj['translit']=allTableRows[i].getElementsByTagName("td")[3].innerHTML;
-	obj['translitmdc']=allTableRows[i].getElementsByTagName("td")[12].innerHTML;
-	obj['allgardiner']=allTableRows[i].getElementsByTagName("td")[0].innerHTML;
-	hg[sMdc]=obj;
+function computeHg() {
+	var localHg={};
+	var allTableRows=$("#maintable tr");
+	for (var i=2;i<allTableRows.length;i++) {	//item 0 is table header, item 1 is filters
+		var sMdc=allTableRows[i].getAttribute("id").substring(3);
+		var sImg=allTableRows[i].getElementsByTagName("td")[2].getElementsByTagName("img")[0].getAttribute("data-src");
+		if (sImg==null) {sImg=allTableRows[i].getElementsByTagName("td")[2].getElementsByTagName("img")[0].getAttribute("src");}	//already lazy-loaded for some reason
+		var obj = {'img': sImg, 'freq': parseInt(allTableRows[i].getElementsByTagName("td")[4].innerHTML), 'lig': (allTableRows[i].getElementsByTagName("td")[13].innerHTML=="(lig)")}
+		obj['translit']=allTableRows[i].getElementsByTagName("td")[3].innerHTML;
+		obj['translitmdc']=allTableRows[i].getElementsByTagName("td")[12].innerHTML;
+		obj['allgardiner']=allTableRows[i].getElementsByTagName("td")[0].innerHTML;
+		localHg[sMdc]=obj;
+	}
+	return localHg;
 }
+
 updatePlayConfig();
 updatePlayAreaDisplay();
 var datatable = $('#maintable').DataTable( {
@@ -1477,7 +1499,7 @@ function updateDisplay() {
 }
 
 $('#searchGardi').keyup(function () {
-	blExclusiveMode = ($("#check_filtersEXCLUSIVE")[0].checked);
+	var blExclusiveMode = ($("#check_filtersEXCLUSIVE")[0].checked);
 	if (blExclusiveMode) {
 		$('#searchMöller').val('');
 		$('#searchMdc').val('');
@@ -1486,7 +1508,7 @@ $('#searchGardi').keyup(function () {
 });
 
 $('#searchMöller').keyup(function () {
-	blExclusiveMode = ($("#check_filtersEXCLUSIVE")[0].checked);
+	var blExclusiveMode = ($("#check_filtersEXCLUSIVE")[0].checked);
 	if (blExclusiveMode) {
 		$('#searchGardi').val('');
 		$('#searchMdc').val('');
@@ -1495,7 +1517,7 @@ $('#searchMöller').keyup(function () {
 });
 
 $('#searchMdc').keyup(function () {
-	blExclusiveMode = ($("#check_filtersEXCLUSIVE")[0].checked);
+	var blExclusiveMode = ($("#check_filtersEXCLUSIVE")[0].checked);
 	if (blExclusiveMode) {
 		$('#searchGardi').val('');
 		$('#searchMöller').val('');
@@ -1504,10 +1526,10 @@ $('#searchMdc').keyup(function () {
 });
 
 $('#check_matchexact, #check_matchcontains, #check_matchregex').change(function (event) {
-    arr=["check_matchexact","check_matchcontains","check_matchregex"];
-	curTarget=event.target.getAttribute("id");
+    var arr=["check_matchexact","check_matchcontains","check_matchregex"];
+	var curTarget=event.target.getAttribute("id");
 	$("#"+curTarget)[0].checked=true;
-	for (i=0;i<arr.length;i++) {
+	for (var i=0;i<arr.length;i++) {
 		if (arr[i]!=curTarget) { 
 			$("#"+arr[i])[0].checked=false; 
 		}
@@ -1516,10 +1538,10 @@ $('#check_matchexact, #check_matchcontains, #check_matchregex').change(function 
 });
 
 $('#check_filtersEXCLUSIVE, #check_filtersAND, #check_filtersOR').change(function (event) {
-    arr=["check_filtersEXCLUSIVE","check_filtersAND","check_filtersOR"];
-	curTarget=event.target.getAttribute("id");
+    var arr=["check_filtersEXCLUSIVE","check_filtersAND","check_filtersOR"];
+	var curTarget=event.target.getAttribute("id");
 	$("#"+curTarget)[0].checked=true;
-	for (i=0;i<arr.length;i++) {
+	for (var i=0;i<arr.length;i++) {
 		if (arr[i]!=curTarget) { 
 			$("#"+arr[i])[0].checked=false; 
 		}

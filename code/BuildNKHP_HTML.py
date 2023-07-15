@@ -300,7 +300,7 @@ s=""
 for c in sorted(set(dcat.values())):
   s+="<td class='checkboxfor"+c+"'><input type='checkbox' onchange='changeCategClassVisibilities()' id='check_cat"+c+"' checked><span class='fr_lang'>"+categDescrip[c]["fr"]+"</span><span class='en_lang'>"+categDescrip[c]["en"]+"</span></td>"
 sHtml=sHtml.replace("XXXTDFORTEXTCATEGXXX",s)
-sHtml=sHtml.replace("XXXSCRIPTFORTEXTCATEGCLASSESXXX","sCategClasses='"+"/".join(sorted(set(dcat.values())))+"'")
+sHtml=sHtml.replace("XXXSCRIPTFORTEXTCATEGCLASSESXXX","var sCategClasses='"+"/".join(sorted(set(dcat.values())))+"'")
 
 sTableContent='<thead><tr>'
 sTableContent+='<th>Gardiner</th>'
